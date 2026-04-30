@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
 
     const image = form.get('image');
+    const title = form.get('title');
     const caption = form.get('caption');
     const scheduledTime = form.get('scheduled_time');
 
@@ -114,6 +115,7 @@ export async function POST(req: NextRequest) {
       .from('scheduled_posts')
       .insert({
         image_url: imageUrl,
+        title: typeof title === 'string' ? title.trim() : null,
         caption: caption.trim(),
         scheduled_time: new Date(scheduledTime).toISOString(),
         status: 'pending',

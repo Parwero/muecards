@@ -3,6 +3,7 @@ export type PostStatus = 'pending' | 'published' | 'failed';
 export interface ScheduledPost {
   id: string;
   image_url: string;
+  title: string | null;
   caption: string;
   scheduled_time: string; // ISO timestamp
   status: PostStatus;
@@ -13,6 +14,7 @@ export interface ScheduledPost {
 }
 
 export interface SchedulePayload {
+  title: string;
   caption: string;
   scheduled_time: string;
 }

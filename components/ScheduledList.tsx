@@ -112,10 +112,13 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 font-serif text-sm leading-snug text-parchment-100">
-                    {post.caption || (
-                      <span className="italic text-parchment-400">Sin caption</span>
+                  <p className="truncate font-serif text-sm font-medium leading-snug text-parchment-50">
+                    {post.title || post.caption || (
+                      <span className="italic text-parchment-400">Sin título</span>
                     )}
+                  </p>
+                  <p className="mt-0.5 line-clamp-1 font-mono text-[10px] text-parchment-400">
+                    {post.caption}
                   </p>
                   <div className="mt-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
                     <Clock className="h-3 w-3 text-gold-400/70" />

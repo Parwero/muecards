@@ -13,13 +13,14 @@ type Toast = { kind: 'ok' | 'err'; message: string } | null;
 export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState<Toast>(null);
 
-  // Create/revoke object URL for preview
+  // Create/revoke object URL for preview + auto-fill title from filename
   useEffect(() => {
     if (!file) {
       setPreviewUrl(null);
@@ -27,6 +28,8 @@ export default function Page() {
     }
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
+    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
+    setTitle(nameWithoutExt);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
@@ -37,7 +40,7 @@ export default function Page() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const canSubmit = Boolean(file && scheduledTime && caption.trim().length > 0);
+  const canSubmit = Boolean(file && scheduledTime && title.trim().length > 0 && caption.trim().length > 0);
 
   const handleSubmit = async () => {
     if (!file || !scheduledTime) return;
@@ -45,6 +48,7 @@ export default function Page() {
     try {
       const fd = new FormData();
       fd.append('image', file);
+      fd.append('title', title);
       fd.append('caption', caption);
       fd.append('scheduled_time', new Date(scheduledTime).toISOString());
 
@@ -55,6 +59,7 @@ export default function Page() {
 
       setToast({ kind: 'ok', message: 'Publicación programada correctamente.' });
       setFile(null);
+      setTitle('');
       setCaption('');
       setScheduledTime('');
       setRefreshKey((k) => k + 1);
@@ -107,10 +112,12 @@ export default function Page() {
           </h2>
           <p className="mb-5 font-serif text-2xl text-parchment-50">Caption & horario</p>
           <ScheduleForm
+            title={title}
             caption={caption}
             scheduledTime={scheduledTime}
             submitting={submitting}
             canSubmit={canSubmit}
+            onTitleChange={setTitle}
             onCaptionChange={setCaption}
             onScheduledTimeChange={setScheduledTime}
             onSubmit={handleSubmit}

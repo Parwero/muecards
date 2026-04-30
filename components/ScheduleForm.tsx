@@ -1,15 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Calendar, Loader2, Send, Type, Layers, RefreshCw } from 'lucide-react';
+import { Calendar, Loader2, Send, Type, Layers, RefreshCw, Tag } from 'lucide-react';
 
 const IG_CAPTION_LIMIT = 2200;
 
 interface ScheduleFormProps {
+  title: string;
   caption: string;
   scheduledTime: string;
   submitting: boolean;
   canSubmit: boolean;
+  onTitleChange: (v: string) => void;
   onCaptionChange: (v: string) => void;
   onScheduledTimeChange: (v: string) => void;
   onSubmit: () => void;
@@ -50,10 +52,12 @@ function isoToLocal(iso: string): string {
 }
 
 export function ScheduleForm({
+  title,
   caption,
   scheduledTime,
   submitting,
   canSubmit,
+  onTitleChange,
   onCaptionChange,
   onScheduledTimeChange,
   onSubmit,
@@ -96,6 +100,21 @@ export function ScheduleForm({
       }}
       className="space-y-6"
     >
+      {/* Title */}
+      <div>
+        <label className="mb-2 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-300">
+          <Tag className="h-3 w-3" />
+          Título de la carta
+        </label>
+        <input
+          type="text"
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Nombre de la carta…"
+          className="w-full rounded-sm border border-ink-600 bg-ink-900 px-4 py-3 font-serif text-lg text-parchment-50 placeholder:text-parchment-400/60 focus:border-gold-500/60 focus:bg-ink-800"
+        />
+      </div>
+
       {/* Caption */}
       <div>
         <label className="mb-2 flex items-center justify-between">
