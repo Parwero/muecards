@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  color-scheme: dark;
+}
+
+html, body {
+  background: #0b0a08;
+  color: #f0e9d6;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01", "cv11";
+}
+
+/* Warm paper grain on the app background */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(ellipse at top, rgba(228,176,98,0.06), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(192,86,59,0.04), transparent 50%);
+}
+
+/* Subtle scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(228,176,98,0.12);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(228,176,98,0.25); }
+
+/* Focus ring — warm gold */
+*:focus-visible {
+  outline: 1px solid rgba(228,176,98,0.6);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Decorative rule */
+.rule-gold {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(228,176,98,0.4) 20%,
+    rgba(228,176,98,0.4) 80%,
+    transparent
+  );
+}

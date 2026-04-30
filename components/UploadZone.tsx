@@ -1,0 +1,144 @@
+'use client';
+
+import { useCallback, useRef, useState } from 'react';
+import { ImagePlus, X, FileWarning } from 'lucide-react';
+
+interface UploadZoneProps {
+  file: File | null;
+  previewUrl: string | null;
+  onFileChange: (file: File | null) => void;
+}
+
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — Instagram image cap
+const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
+
+export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) {
+  const [dragOver, setDragOver] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const validate = (f: File): string | null => {
+    if (!ACCEPTED.includes(f.type)) return 'Formato no soportado. Usa JPG, PNG o WEBP.';
+    if (f.size > MAX_BYTES) return 'La imagen supera 8 MB.';
+    return null;
+  };
+
+  const handleFiles = useCallback(
+    (files: FileList | null) => {
+      if (!files || files.length === 0) return;
+      const next = files[0];
+      const err = validate(next);
+      if (err) {
+        setError(err);
+        return;
+      }
+      setError(null);
+      onFileChange(next);
+    },
+    [onFileChange],
+  );
+
+  const clear = () => {
+    onFileChange(null);
+    setError(null);
+    if (inputRef.current) inputRef.current.value = '';
+  };
+
+  // Has preview → compact preview card
+  if (file && previewUrl) {
+    return (
+      <div className="relative overflow-hidden rounded-sm border border-ink-600 bg-ink-900 shadow-card">
+        <div className="aspect-[4/5] w-full bg-ink-950">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={previewUrl}
+            alt="Preview de la carta"
+            className="h-full w-full object-contain"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={clear}
+          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-ink-600 bg-ink-900/80 text-parchment-200 backdrop-blur transition hover:border-gold-400 hover:text-gold-300"
+          aria-label="Quitar imagen"
+        >
+          <X className="h-4 w-4" />
+        </button>
+        <div className="flex items-center justify-between border-t border-ink-700 bg-ink-900 px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate font-mono text-xs text-parchment-200">{file.name}</p>
+            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
+              {(file.size / 1024).toFixed(0)} kb · {file.type.split('/')[1]}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold-400 hover:text-gold-300"
+          >
+            Cambiar
+          </button>
+        </div>
+        <input
+          ref={inputRef}
+          type="file"
+          accept={ACCEPTED.join(',')}
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+      </div>
+    );
+  }
+
+  // Empty state → drop zone
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDragOver(true);
+        }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDragOver(false);
+          handleFiles(e.dataTransfer.files);
+        }}
+        className={`group relative flex aspect-[4/5] w-full flex-col items-center justify-center gap-4 rounded-sm border border-dashed text-center transition ${
+          dragOver
+            ? 'border-gold-400 bg-ink-800'
+            : 'border-ink-600 bg-ink-900/60 hover:border-gold-500/60 hover:bg-ink-900'
+        }`}
+      >
+        <div className="relative flex h-14 w-14 items-center justify-center">
+          <div className="absolute inset-0 rotate-45 border border-gold-400/40" />
+          <ImagePlus className="relative h-5 w-5 text-gold-400" strokeWidth={1.5} />
+        </div>
+        <div className="space-y-1 px-8">
+          <p className="font-serif text-xl text-parchment-50">Suelta tu carta aquí</p>
+          <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-400">
+            o pulsa para seleccionar archivo
+          </p>
+        </div>
+        <p className="absolute bottom-4 font-mono text-[10px] text-parchment-400">
+          JPG · PNG · WEBP — máx 8MB
+        </p>
+      </button>
+      {error && (
+        <div className="mt-3 flex items-center gap-2 border-l-2 border-ember-500 bg-ember-500/5 px-3 py-2 font-mono text-xs text-ember-500">
+          <FileWarning className="h-3.5 w-3.5 shrink-0" />
+          {error}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPTED.join(',')}
+        className="hidden"
+        onChange={(e) => handleFiles(e.target.files)}
+      />
+    </div>
+  );
+}
