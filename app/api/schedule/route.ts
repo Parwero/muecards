@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient, STORAGE_BUCKET } from '@/lib/supabase';
+import sharp from 'sharp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -59,10 +60,16 @@ export async function POST(req: NextRequest) {
     if (image.size > MAX_BYTES) {
       return NextResponse.json({ error: 'Imagen supera 8 MB.' }, { status: 400 });
     }
-    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowed.includes(image.type)) {
+    const isHeic =
+      image.type === 'image/heic' ||
+      image.type === 'image/heif' ||
+      image.name.toLowerCase().endsWith('.heic') ||
+      image.name.toLowerCase().endsWith('.heif');
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+    if (!allowed.includes(image.type) && !isHeic) {
       return NextResponse.json(
-        { error: 'Formato no permitido. Usa JPG, PNG o WEBP.' },
+        { error: 'Formato no permitido. Usa JPG, PNG, WEBP o HEIC.' },
         { status: 400 },
       );
     }
@@ -70,16 +77,30 @@ export async function POST(req: NextRequest) {
     // ---- 1) Upload to Storage -------------------------------------------
     const supabase = getServiceClient();
 
-    const ext = image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg';
+    const rawBuffer = Buffer.from(await image.arrayBuffer());
+    let finalBuffer: Buffer;
+    let contentType: string;
+    let ext: string;
+
+    if (isHeic) {
+      finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
+      contentType = 'image/jpeg';
+      ext = 'jpg';
+    } else {
+      finalBuffer = rawBuffer;
+      contentType = image.type;
+      ext = image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg';
+    }
+
     const objectName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
     const storagePath = `pending/${objectName}`;
 
-    const bytes = new Uint8Array(await image.arrayBuffer());
+    const bytes = new Uint8Array(finalBuffer);
 
     const { error: uploadErr } = await supabase.storage
       .from(STORAGE_BUCKET)
       .upload(storagePath, bytes, {
-        contentType: image.type,
+        contentType,
         cacheControl: '3600',
         upsert: false,
       });

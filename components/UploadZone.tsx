@@ -10,7 +10,17 @@ interface UploadZoneProps {
 }
 
 const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — Instagram image cap
-const ACCEPTED = ['image/jpeg', 'image/png', 'image/webp'];
+const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
+
+function isHeicFile(f: File): boolean {
+  const name = f.name.toLowerCase();
+  return (
+    f.type === 'image/heic' ||
+    f.type === 'image/heif' ||
+    name.endsWith('.heic') ||
+    name.endsWith('.heif')
+  );
+}
 
 export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) {
   const [dragOver, setDragOver] = useState(false);
@@ -18,7 +28,8 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
   const inputRef = useRef<HTMLInputElement>(null);
 
   const validate = (f: File): string | null => {
-    if (!ACCEPTED.includes(f.type)) return 'Formato no soportado. Usa JPG, PNG o WEBP.';
+    if (!ACCEPTED_TYPES.includes(f.type) && !isHeicFile(f))
+      return 'Formato no soportado. Usa JPG, PNG, WEBP o HEIC.';
     if (f.size > MAX_BYTES) return 'La imagen supera 8 MB.';
     return null;
   };
@@ -82,7 +93,7 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPTED.join(',')}
+          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
           className="hidden"
           onChange={(e) => handleFiles(e.target.files)}
         />
@@ -123,7 +134,7 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
           </p>
         </div>
         <p className="absolute bottom-4 font-mono text-[10px] text-parchment-400">
-          JPG · PNG · WEBP — máx 8MB
+          JPG · PNG · WEBP · HEIC — máx 8MB
         </p>
       </button>
       {error && (
@@ -135,7 +146,7 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED.join(',')}
+        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
         className="hidden"
         onChange={(e) => handleFiles(e.target.files)}
       />
