@@ -49,7 +49,7 @@ const POLL_SECS    = parseInt(process.env.POLL_INTERVAL ?? '30', 10);
 
 const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
 
-const MIME: Record<string, string> = {
+const MIME = {
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
   '.png': 'image/png',
   '.webp': 'image/webp',
