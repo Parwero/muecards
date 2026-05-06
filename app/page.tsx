@@ -14,7 +14,6 @@ export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [title, setTitle] = useState('');
-  const [caption, setCaption] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -53,7 +52,7 @@ export default function Page() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  const canSubmit = Boolean(file && scheduledTime && title.trim().length > 0 && caption.trim().length > 0);
+  const canSubmit = Boolean(file && scheduledTime && title.trim().length > 0);
 
   const handleSubmit = async () => {
     if (!file || !scheduledTime) return;
@@ -61,8 +60,7 @@ export default function Page() {
     try {
       const fd = new FormData();
       fd.append('image', file);
-      fd.append('title', title);
-      fd.append('caption', caption);
+      fd.append('caption', title);
       fd.append('scheduled_time', new Date(scheduledTime).toISOString());
 
       const res = await fetch('/api/schedule', { method: 'POST', body: fd });
@@ -73,7 +71,6 @@ export default function Page() {
       setToast({ kind: 'ok', message: 'Publicación programada correctamente.' });
       setFile(null);
       setTitle('');
-      setCaption('');
       setScheduledTime('');
       setRefreshKey((k) => k + 1);
     } catch (e) {
@@ -131,15 +128,13 @@ export default function Page() {
           <h2 className="mb-1 font-mono text-[11px] uppercase tracking-[0.25em] text-gold-400">
             02 · El anuncio
           </h2>
-          <p className="mb-5 font-serif text-2xl text-parchment-50">Caption & horario</p>
+          <p className="mb-5 font-serif text-2xl text-parchment-50">Descripción & horario</p>
           <ScheduleForm
             title={title}
-            caption={caption}
             scheduledTime={scheduledTime}
             submitting={submitting}
             canSubmit={canSubmit}
             onTitleChange={setTitle}
-            onCaptionChange={setCaption}
             onScheduledTimeChange={setScheduledTime}
             onSubmit={handleSubmit}
           />

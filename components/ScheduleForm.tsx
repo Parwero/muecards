@@ -1,18 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Calendar, Loader2, Send, Type, Layers, RefreshCw, Tag } from 'lucide-react';
+import { Calendar, Loader2, Send, Layers, RefreshCw, Tag } from 'lucide-react';
 
 const IG_CAPTION_LIMIT = 2200;
 
 interface ScheduleFormProps {
   title: string;
-  caption: string;
   scheduledTime: string;
   submitting: boolean;
   canSubmit: boolean;
   onTitleChange: (v: string) => void;
-  onCaptionChange: (v: string) => void;
   onScheduledTimeChange: (v: string) => void;
   onSubmit: () => void;
 }
@@ -34,7 +32,6 @@ function getMinDateTime(): string {
   );
 }
 
-/** Convert ISO string to datetime-local value (local timezone) */
 function isoToLocal(iso: string): string {
   const d = new Date(iso);
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -53,16 +50,14 @@ function isoToLocal(iso: string): string {
 
 export function ScheduleForm({
   title,
-  caption,
   scheduledTime,
   submitting,
   canSubmit,
   onTitleChange,
-  onCaptionChange,
   onScheduledTimeChange,
   onSubmit,
 }: ScheduleFormProps) {
-  const charCount = caption.length;
+  const charCount = title.length;
   const overLimit = charCount > IG_CAPTION_LIMIT;
 
   const [queueMode, setQueueMode] = useState(false);
@@ -84,7 +79,6 @@ export function ScheduleForm({
     }
   };
 
-  // When queue mode is toggled ON, auto-fetch the next available slot.
   useEffect(() => {
     if (queueMode) {
       fetchNextSlot();
@@ -100,27 +94,12 @@ export function ScheduleForm({
       }}
       className="space-y-6"
     >
-      {/* Title */}
-      <div>
-        <label className="mb-2 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-300">
-          <Tag className="h-3 w-3" />
-          Título de la carta
-        </label>
-        <input
-          type="text"
-          value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
-          placeholder="Nombre de la carta…"
-          className="w-full rounded-sm border border-ink-600 bg-ink-900 px-4 py-3 font-serif text-lg text-parchment-50 placeholder:text-parchment-400/60 focus:border-gold-500/60 focus:bg-ink-800"
-        />
-      </div>
-
-      {/* Caption */}
+      {/* Title / Caption */}
       <div>
         <label className="mb-2 flex items-center justify-between">
           <span className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-300">
-            <Type className="h-3 w-3" />
-            Caption
+            <Tag className="h-3 w-3" />
+            Descripción para Instagram
           </span>
           <span
             className={`font-mono text-[11px] tabular-nums ${
@@ -135,9 +114,9 @@ export function ScheduleForm({
           </span>
         </label>
         <textarea
-          value={caption}
-          onChange={(e) => onCaptionChange(e.target.value)}
-          placeholder="Describe la carta: set, rareza, condición, historia…"
+          value={title}
+          onChange={(e) => onTitleChange(e.target.value)}
+          placeholder="Nombre de la carta, set, rareza, condición, historia…"
           rows={7}
           className="w-full resize-y rounded-sm border border-ink-600 bg-ink-900 px-4 py-3 font-serif text-lg leading-relaxed text-parchment-50 placeholder:text-parchment-400/60 focus:border-gold-500/60 focus:bg-ink-800"
         />

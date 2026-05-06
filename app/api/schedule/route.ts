@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
     const form = await req.formData();
 
     const image = form.get('image');
-    const title = form.get('title');
     const caption = form.get('caption');
     const scheduledTime = form.get('scheduled_time');
 
@@ -151,8 +150,6 @@ export async function POST(req: NextRequest) {
         scheduled_time: new Date(scheduledTime).toISOString(),
         status: 'pending',
         storage_path: storagePath,
-        // title is optional — only included when the column exists in the DB
-        ...(typeof title === 'string' && title.trim() ? { title: title.trim() } : {}),
       })
       .select()
       .single();
