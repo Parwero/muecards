@@ -89,6 +89,8 @@ async function uploadFile(filePath, fileName) {
     headers: { Authorization: `Bearer ${CRON_SECRET}` },
     body: form,
   });
+  // Nota: el servidor inserta como 'local_queued' (fecha sentinel 2099).
+  // El usuario confirma el horario desde el panel web.
 
   if (!res.ok) {
     let msg = `HTTP ${res.status}`;

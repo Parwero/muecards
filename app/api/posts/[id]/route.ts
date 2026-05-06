@@ -84,9 +84,23 @@ export async function PATCH(
       return NextResponse.json({ error: 'scheduled_time inválido.' }, { status: 400 });
     }
 
+    // Al confirmar un post local_queued, mover el storage_path a 'pending/'
+    const { data: current } = await supabase
+      .from('scheduled_posts')
+      .select('storage_path')
+      .eq('id', id)
+      .single();
+
+    const updates: Record<string, unknown> = {
+      scheduled_time: new Date(body.scheduled_time).toISOString(),
+    };
+    if (current?.storage_path?.startsWith('local_queued/')) {
+      updates.storage_path = current.storage_path.replace('local_queued/', 'pending/');
+    }
+
     const { error } = await supabase
       .from('scheduled_posts')
-      .update({ scheduled_time: new Date(body.scheduled_time).toISOString() })
+      .update(updates)
       .eq('id', id)
       .eq('status', 'pending');
 

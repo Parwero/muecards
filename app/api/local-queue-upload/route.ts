@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     // ── Upload to Supabase Storage ───────────────────────────────────────────
     const supabase    = getServiceClient();
     const objectName  = `${Date.now()}-${crypto.randomUUID()}.${outExt}`;
-    const storagePath = `pending/${objectName}`;
+    const storagePath = `local_queued/${objectName}`;
 
     const { error: uploadErr } = await supabase.storage
       .from(STORAGE_BUCKET)
@@ -89,19 +89,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No se pudo obtener URL pública.' }, { status: 500 });
     }
 
-    // ── Auto-schedule at last pending + 24 h ────────────────────────────────
-    const { data: lastPost } = await supabase
-      .from('scheduled_posts')
-      .select('scheduled_time')
-      .eq('status', 'pending')
-      .order('scheduled_time', { ascending: false })
-      .limit(1)
-      .single();
-
-    const base          = lastPost?.scheduled_time
-      ? new Date(lastPost.scheduled_time).getTime()
-      : Date.now();
-    const scheduledTime = new Date(base + DAY_MS).toISOString();
+    // Fecha sentinel: el publicador solo procesa scheduled_time <= now.
+    // El usuario asigna la fecha real desde el panel.
+    const scheduledTime = '2099-01-01T09:00:00.000Z';
     const caption       = basename(name, ext);
 
     // ── Insert DB row ────────────────────────────────────────────────────────
