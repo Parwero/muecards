@@ -54,6 +54,13 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
+  // Auto-refresh every 30 s so newly scheduled posts appear without manual reload
+  useEffect(() => {
+    const id = setInterval(load, 30_000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <section className="flex h-full flex-col">
       <header className="mb-4 flex items-center justify-between">
@@ -102,7 +109,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                 key={post.id}
                 className="group flex gap-3 rounded-sm border border-ink-700 bg-ink-900/70 p-3 transition hover:border-gold-500/40"
               >
-                <div className="relative h-20 w-16 shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
+                <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={post.image_url}
@@ -112,13 +119,8 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate font-serif text-sm font-medium leading-snug text-parchment-50">
-                    {post.title || post.caption || (
-                      <span className="italic text-parchment-400">Sin título</span>
-                    )}
-                  </p>
-                  <p className="mt-0.5 line-clamp-1 font-mono text-[10px] text-parchment-400">
-                    {post.caption}
+                  <p className="line-clamp-3 font-serif text-sm leading-snug text-parchment-50">
+                    {post.caption || <span className="italic text-parchment-400">Sin descripción</span>}
                   </p>
                   <div className="mt-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
                     <Clock className="h-3 w-3 text-gold-400/70" />

@@ -41,8 +41,33 @@ export default function Page() {
       return () => URL.revokeObjectURL(url);
     }
 
-    // heic-decode uses Node.js APIs — cannot run in browser. Placeholder shown.
-    setPreviewUrl(null);
+    // HEIC: convert via server for preview
+    let blobUrl: string | null = null;
+    const controller = new AbortController();
+
+    (async () => {
+      try {
+        const fd = new FormData();
+        fd.append('image', file);
+        const res = await fetch('/api/preview', {
+          method: 'POST',
+          body: fd,
+          signal: controller.signal,
+        });
+        if (res.ok) {
+          const blob = await res.blob();
+          blobUrl = URL.createObjectURL(blob);
+          setPreviewUrl(blobUrl);
+        }
+      } catch {
+        // aborted or server error — placeholder stays
+      }
+    })();
+
+    return () => {
+      controller.abort();
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
   }, [file]);
 
   // Auto-dismiss toasts
