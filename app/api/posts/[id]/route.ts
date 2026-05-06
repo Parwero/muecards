@@ -15,7 +15,6 @@ async function rescheduleRemaining(supabase: SupabaseClient) {
     .order('scheduled_time', { ascending: true });
 
   if (!posts || posts.length < 2) return;
-
   const base = new Date(posts[0].scheduled_time).getTime();
   for (let i = 1; i < posts.length; i++) {
     const desired = new Date(base + i * DAY_MS).toISOString();
@@ -36,43 +35,29 @@ export async function DELETE(
     const supabase = getServiceClient();
     const { id } = params;
 
-    const { data: post, error: fetchErr } = await supabase
-      .from('scheduled_posts')
-      .select('id, status, storage_path')
-      .eq('id', id)
-      .single();
-
-    if (fetchErr || !post) {
-      return NextResponse.json({ error: 'Post no encontrado.' }, { status: 404 });
-    }
-    if (post.status !== 'pending') {
-      return NextResponse.json(
-        { error: 'Solo se pueden cancelar publicaciones pendientes.' },
-        { status: 409 },
-      );
-    }
-
-    // .select() forces Supabase to return affected rows — exposes silent no-ops
-    const { data: deleted, error: deleteErr } = await supabase
+    // Delete directly — no status check, no pre-fetch.
+    // .select() forces Supabase to return affected rows so we know if it worked.
+    const { data: deleted, error } = await supabase
       .from('scheduled_posts')
       .delete()
       .eq('id', id)
-      .eq('status', 'pending')
-      .select('id');
+      .select('id, storage_path');
 
-    if (deleteErr) {
-      return NextResponse.json({ error: deleteErr.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Row already gone — treat as success so the UI removes it cleanly
     if (!deleted || deleted.length === 0) {
-      return NextResponse.json(
-        { error: 'No se pudo eliminar (estado cambiado).' },
-        { status: 409 },
-      );
+      return NextResponse.json({ ok: true, already_gone: true });
     }
 
-    if (post.storage_path) {
-      await supabase.storage.from(STORAGE_BUCKET).remove([post.storage_path]).catch(() => {});
+    const row = deleted[0] as { id: string; storage_path?: string | null };
+    if (row.storage_path) {
+      await supabase.storage
+        .from(STORAGE_BUCKET)
+        .remove([row.storage_path])
+        .catch(() => {});
     }
 
     await rescheduleRemaining(supabase);
@@ -99,29 +84,14 @@ export async function PATCH(
       return NextResponse.json({ error: 'scheduled_time inválido.' }, { status: 400 });
     }
 
-    const { data: post, error: fetchErr } = await supabase
-      .from('scheduled_posts')
-      .select('id, status')
-      .eq('id', id)
-      .single();
-
-    if (fetchErr || !post) {
-      return NextResponse.json({ error: 'Post no encontrado.' }, { status: 404 });
-    }
-    if (post.status !== 'pending') {
-      return NextResponse.json(
-        { error: 'Solo se puede reprogramar publicaciones pendientes.' },
-        { status: 409 },
-      );
-    }
-
-    const { error: updateErr } = await supabase
+    const { error } = await supabase
       .from('scheduled_posts')
       .update({ scheduled_time: new Date(body.scheduled_time).toISOString() })
-      .eq('id', id);
+      .eq('id', id)
+      .eq('status', 'pending');
 
-    if (updateErr) {
-      return NextResponse.json({ error: updateErr.message }, { status: 500 });
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true });
