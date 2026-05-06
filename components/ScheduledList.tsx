@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Clock, Loader2, RefreshCw, Inbox, X } from 'lucide-react';
+import { Clock, Loader2, RefreshCw, Inbox, X, ImageOff } from 'lucide-react';
 import type { ScheduledPost } from '@/types';
 
 interface ScheduledListProps {
@@ -148,13 +148,26 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                 }`}
               >
                 <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={post.image_url}
-                    alt=""
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
+                  {post.image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={post.image_url}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        const placeholder = e.currentTarget.nextElementSibling as HTMLElement | null;
+                        if (placeholder) placeholder.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div
+                    className="absolute inset-0 items-center justify-center"
+                    style={{ display: post.image_url ? 'none' : 'flex' }}
+                  >
+                    <ImageOff className="h-5 w-5 text-parchment-600" strokeWidth={1.5} />
+                  </div>
                 </div>
                 <div className="flex min-w-0 flex-1 flex-col">
                   <div className="flex items-start gap-1">
