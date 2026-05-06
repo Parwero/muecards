@@ -42,10 +42,8 @@ export default function Page() {
       return () => URL.revokeObjectURL(url);
     }
 
-    // heic-decode uses Node.js APIs (fs) and cannot run in the browser.
-    // Show the "Foto iOS lista" placeholder — conversion happens server-side on publish.
+    // heic-decode uses Node.js APIs — cannot run in browser. Placeholder shown.
     setPreviewUrl(null);
-    setPreviewLoading(false);
   }, [file]);
 
   // Auto-dismiss toasts
