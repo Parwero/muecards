@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Clock, Loader2, RefreshCw, Inbox } from 'lucide-react';
+import { Clock, Loader2, RefreshCw, Inbox, X } from 'lucide-react';
 import type { ScheduledPost } from '@/types';
 
 interface ScheduledListProps {
@@ -33,6 +33,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
@@ -46,6 +47,26 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
       setError(e instanceof Error ? e.message : 'Error desconocido');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const cancel = async (id: string) => {
+    setDeleting((prev) => new Set(prev).add(id));
+    try {
+      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = (await res.json()) as { error?: string };
+        throw new Error(data.error ?? `HTTP ${res.status}`);
+      }
+      setPosts((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo cancelar.');
+    } finally {
+      setDeleting((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
     }
   };
 
@@ -107,8 +128,27 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
             return (
               <li
                 key={post.id}
-                className="group flex gap-3 rounded-sm border border-ink-700 bg-ink-900/70 p-3 transition hover:border-gold-500/40"
+                className={`group relative flex gap-3 rounded-sm border bg-ink-900/70 p-3 transition ${
+                  deleting.has(post.id)
+                    ? 'border-ink-700 opacity-50'
+                    : 'border-ink-700 hover:border-gold-500/40'
+                }`}
               >
+                {/* Cancel button — visible on hover */}
+                <button
+                  type="button"
+                  onClick={() => cancel(post.id)}
+                  disabled={deleting.has(post.id)}
+                  aria-label="Cancelar publicación"
+                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-sm border border-ink-600 bg-ink-900 text-parchment-400 opacity-0 transition group-hover:opacity-100 hover:border-ember-500/60 hover:text-ember-400 disabled:cursor-not-allowed"
+                >
+                  {deleting.has(post.id) ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <X className="h-3 w-3" />
+                  )}
+                </button>
+
                 <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
