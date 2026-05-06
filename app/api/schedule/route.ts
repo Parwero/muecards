@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient, STORAGE_BUCKET } from '@/lib/supabase';
 import { log } from '@/lib/logger';
 import sharp from 'sharp';
-import heicDecode = require('heic-decode');
+import heicDecode from 'heic-decode';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';

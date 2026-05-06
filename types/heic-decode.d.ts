@@ -8,5 +8,5 @@ declare module 'heic-decode' {
     buffer: Buffer | Uint8Array | ArrayBuffer;
   }
   function heicDecode(options: HeicDecodeOptions): Promise<HeicDecodeResult>;
-  export = heicDecode;
+  export default heicDecode;
 }
