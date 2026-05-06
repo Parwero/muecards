@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Clock, Loader2, RefreshCw, Inbox, X, ImageOff, Check, Calendar } from 'lucide-react';
+import { Clock, Loader2, RefreshCw, Inbox, X, ImageOff, Check } from 'lucide-react';
 import type { ScheduledPost } from '@/types';
 
 interface ScheduledListProps {
@@ -205,7 +205,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                       <ImageOff className="h-5 w-5 text-parchment-600" strokeWidth={1.5} />
                     </div>
                   </div>
-                  <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex min-w-0 flex-1 flex-col gap-1">
                     <div className="flex items-start gap-1">
                       <p className="line-clamp-2 flex-1 font-serif text-sm leading-snug text-parchment-50">
                         {post.caption || <span className="italic text-parchment-400">Sin descripción</span>}
@@ -224,12 +224,36 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                         )}
                       </button>
                     </div>
-                    <div className="mt-auto flex items-center gap-2 pt-2 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
+                    <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
                       <Clock className="h-3 w-3 text-gold-400/70" />
                       <span>{when.date}</span>
                       <span className="text-ink-500">·</span>
                       <span>{when.time}</span>
                       <span className="ml-auto text-gold-400/80">{when.relative}</span>
+                    </div>
+                    {/* Inline date editor */}
+                    <div className="mt-1 flex items-center gap-1">
+                      <input
+                        type="datetime-local"
+                        value={editTimes[post.id] ?? toDatetimeLocal(post.scheduled_time)}
+                        onChange={(e) =>
+                          setEditTimes((prev) => ({ ...prev, [post.id]: e.target.value }))
+                        }
+                        className="flex-1 rounded-sm border border-ink-600 bg-ink-950 px-1.5 py-0.5 font-mono text-[10px] text-parchment-300 focus:border-gold-500/60 focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => saveTime(post.id)}
+                        disabled={!(editTimes[post.id] && editTimes[post.id] !== toDatetimeLocal(post.scheduled_time)) || saving.has(post.id)}
+                        aria-label="Guardar fecha"
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-gold-500/40 text-gold-400 transition hover:bg-gold-500/10 disabled:cursor-not-allowed disabled:border-ink-600 disabled:text-parchment-600"
+                      >
+                        {saving.has(post.id) ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Check className="h-3 w-3" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 </li>
@@ -239,60 +263,6 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
         )}
       </section>
 
-      {/* ── Editar horario ────────────────────────────────── */}
-      {posts.length > 0 && (
-        <section className="flex flex-col">
-          <header className="mb-4 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-gold-400/70" />
-            <h2 className="font-serif text-xl text-parchment-50">Editar horario</h2>
-          </header>
-
-          <div className="rule-gold mb-4" />
-
-          <ul className="space-y-2">
-            {posts.map((post, idx) => {
-              const savedLocal = toDatetimeLocal(post.scheduled_time);
-              const currentVal = editTimes[post.id] ?? savedLocal;
-              const isDirty = currentVal !== savedLocal;
-
-              return (
-                <li
-                  key={post.id}
-                  className="flex items-center gap-3 rounded-sm border border-ink-700 bg-ink-900/50 px-3 py-2"
-                >
-                  <span className="w-5 shrink-0 text-center font-mono text-[10px] text-parchment-500">
-                    {idx + 1}
-                  </span>
-                  <p className="min-w-0 flex-1 truncate font-serif text-sm text-parchment-200">
-                    {post.caption || <span className="italic text-parchment-500">Sin descripción</span>}
-                  </p>
-                  <input
-                    type="datetime-local"
-                    value={currentVal}
-                    onChange={(e) =>
-                      setEditTimes((prev) => ({ ...prev, [post.id]: e.target.value }))
-                    }
-                    className="rounded-sm border border-ink-600 bg-ink-950 px-2 py-1 font-mono text-xs text-parchment-200 focus:border-gold-500/60 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => saveTime(post.id)}
-                    disabled={!isDirty || saving.has(post.id)}
-                    aria-label="Guardar fecha"
-                    className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border border-gold-500/40 text-gold-400 transition hover:bg-gold-500/10 disabled:cursor-not-allowed disabled:border-ink-600 disabled:text-parchment-600"
-                  >
-                    {saving.has(post.id) ? (
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                      <Check className="h-3 w-3" />
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
     </div>
   );
 }
