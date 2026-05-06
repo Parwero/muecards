@@ -134,13 +134,13 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                     : 'border-ink-700 hover:border-gold-500/40'
                 }`}
               >
-                {/* Cancel button — visible on hover */}
+                {/* Cancel button — always visible */}
                 <button
                   type="button"
                   onClick={() => cancel(post.id)}
                   disabled={deleting.has(post.id)}
                   aria-label="Cancelar publicación"
-                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-sm border border-ink-600 bg-ink-900 text-parchment-400 opacity-0 transition group-hover:opacity-100 hover:border-ember-500/60 hover:text-ember-400 disabled:cursor-not-allowed"
+                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-sm border border-ink-600 bg-ink-900/80 text-parchment-400 transition hover:border-ember-500/60 hover:text-ember-400 disabled:cursor-not-allowed"
                 >
                   {deleting.has(post.id) ? (
                     <Loader2 className="h-3 w-3 animate-spin" />
