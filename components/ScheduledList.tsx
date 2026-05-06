@@ -128,27 +128,12 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
             return (
               <li
                 key={post.id}
-                className={`group relative flex gap-3 rounded-sm border bg-ink-900/70 p-3 transition ${
+                className={`flex gap-3 rounded-sm border bg-ink-900/70 p-3 transition ${
                   deleting.has(post.id)
                     ? 'border-ink-700 opacity-50'
                     : 'border-ink-700 hover:border-gold-500/40'
                 }`}
               >
-                {/* Cancel button — always visible */}
-                <button
-                  type="button"
-                  onClick={() => cancel(post.id)}
-                  disabled={deleting.has(post.id)}
-                  aria-label="Cancelar publicación"
-                  className="absolute right-2 top-2 flex h-5 w-5 items-center justify-center rounded-sm border border-ink-600 bg-ink-900/80 text-parchment-400 transition hover:border-ember-500/60 hover:text-ember-400 disabled:cursor-not-allowed"
-                >
-                  {deleting.has(post.id) ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <X className="h-3 w-3" />
-                  )}
-                </button>
-
                 <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -158,11 +143,26 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                     loading="lazy"
                   />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-3 font-serif text-sm leading-snug text-parchment-50">
-                    {post.caption || <span className="italic text-parchment-400">Sin descripción</span>}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
+                <div className="flex min-w-0 flex-1 flex-col">
+                  <div className="flex items-start gap-1">
+                    <p className="line-clamp-2 flex-1 font-serif text-sm leading-snug text-parchment-50">
+                      {post.caption || <span className="italic text-parchment-400">Sin descripción</span>}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => cancel(post.id)}
+                      disabled={deleting.has(post.id)}
+                      aria-label="Cancelar publicación"
+                      className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-ember-500/50 text-ember-400 transition hover:bg-ember-500/10 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      {deleting.has(post.id) ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <X className="h-3 w-3" />
+                      )}
+                    </button>
+                  </div>
+                  <div className="mt-auto flex items-center gap-2 pt-2 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
                     <Clock className="h-3 w-3 text-gold-400/70" />
                     <span>{when.date}</span>
                     <span className="text-ink-500">·</span>
