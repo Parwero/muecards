@@ -9,10 +9,11 @@
  *   node scripts/watch-uploader.mjs
  *
  * Config — set these in .env.local or as environment variables:
- *   MUECARDS_URL   = https://muecards2.vercel.app   (your Vercel URL)
+ *   MUECARDS_URL   = https://muecards2.vercel.app      (your Vercel URL)
  *   CRON_SECRET    = <your CRON_SECRET value>
- *   WATCH_FOLDER   = G:\Mi unidad\Poke\Subidas      (optional, this is the default)
- *   POLL_INTERVAL  = 30                             (seconds, optional)
+ *   WATCH_FOLDER   = G:\Mi unidad\Poke\Por Subir       (optional, this is the default)
+ *   DONE_FOLDER    = G:\Mi unidad\Poke\Subidas         (optional, this is the default)
+ *   POLL_INTERVAL  = 30                                (seconds, optional)
  */
 
 import { readFileSync, readdirSync, existsSync, mkdirSync, renameSync } from 'fs';
@@ -42,8 +43,8 @@ loadEnv();
 // ── Config ────────────────────────────────────────────────────────────────────
 const MUECARDS_URL = (process.env.MUECARDS_URL ?? 'http://localhost:3000').replace(/\/$/, '');
 const CRON_SECRET  = process.env.CRON_SECRET ?? '';
-const WATCH_FOLDER = process.env.WATCH_FOLDER ?? 'G:\\Mi unidad\\Poke\\Subidas';
-const DONE_FOLDER  = join(WATCH_FOLDER, 'subidas');
+const WATCH_FOLDER = process.env.WATCH_FOLDER ?? 'G:\\Mi unidad\\Poke\\Por Subir';
+const DONE_FOLDER  = process.env.DONE_FOLDER  ?? 'G:\\Mi unidad\\Poke\\Subidas';
 const POLL_SECS    = parseInt(process.env.POLL_INTERVAL ?? '30', 10);
 
 const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
