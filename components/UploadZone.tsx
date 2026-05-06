@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { ImagePlus, X, FileWarning } from 'lucide-react';
+import { ImagePlus, X, FileWarning, Camera } from 'lucide-react';
 
 interface UploadZoneProps {
   file: File | null;
@@ -9,7 +9,7 @@ interface UploadZoneProps {
   onFileChange: (file: File | null) => void;
 }
 
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — Instagram image cap
+const MAX_BYTES = 8 * 1024 * 1024;
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'];
 
 function isHeicFile(f: File): boolean {
@@ -46,6 +46,7 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
       setError(null);
       onFileChange(next);
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [onFileChange],
   );
 
@@ -55,26 +56,41 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
     if (inputRef.current) inputRef.current.value = '';
   };
 
-  // Has preview → compact preview card
+  const fileInput = (
+    <input
+      ref={inputRef}
+      type="file"
+      accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
+      className="hidden"
+      onChange={(e) => handleFiles(e.target.files)}
+    />
+  );
+
+  // ── State 1: file selected with image preview (non-HEIC) ─────────────────
   if (file && previewUrl) {
     return (
-      <div className="relative overflow-hidden rounded-sm border border-ink-600 bg-ink-900 shadow-card">
-        <div className="aspect-[4/5] w-full bg-ink-950">
+      <div className="overflow-hidden rounded-sm border border-ink-600 bg-ink-900 shadow-card">
+        {/* Instagram-style preview: 4:5 portrait, object-cover */}
+        <div className="relative aspect-[4/5] w-full overflow-hidden bg-ink-950">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={previewUrl}
-            alt="Preview de la carta"
-            className="h-full w-full object-contain"
+            alt="Preview Instagram"
+            className="h-full w-full object-cover"
           />
+          {/* Instagram aspect ratio label */}
+          <span className="absolute left-2 top-2 rounded-sm bg-ink-950/70 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wider text-parchment-400 backdrop-blur">
+            4 : 5 · Instagram
+          </span>
+          <button
+            type="button"
+            onClick={clear}
+            className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full border border-ink-600 bg-ink-900/80 text-parchment-200 backdrop-blur transition hover:border-gold-400 hover:text-gold-300"
+            aria-label="Quitar imagen"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={clear}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full border border-ink-600 bg-ink-900/80 text-parchment-200 backdrop-blur transition hover:border-gold-400 hover:text-gold-300"
-          aria-label="Quitar imagen"
-        >
-          <X className="h-4 w-4" />
-        </button>
         <div className="flex items-center justify-between border-t border-ink-700 bg-ink-900 px-4 py-3">
           <div className="min-w-0">
             <p className="truncate font-mono text-xs text-parchment-200">{file.name}</p>
@@ -90,18 +106,60 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
             Cambiar
           </button>
         </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-          className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
-        />
+        {fileInput}
       </div>
     );
   }
 
-  // Empty state → drop zone
+  // ── State 2: HEIC file selected (no browser preview available) ───────────
+  if (file && !previewUrl) {
+    return (
+      <div className="overflow-hidden rounded-sm border border-ink-600 bg-ink-900 shadow-card">
+        <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-4 bg-ink-950">
+          <div className="relative flex h-16 w-16 items-center justify-center">
+            <div className="absolute inset-0 rotate-45 border border-gold-400/40" />
+            <Camera className="relative h-6 w-6 text-gold-400" strokeWidth={1.5} />
+          </div>
+          <div className="space-y-1 px-8 text-center">
+            <p className="font-serif text-lg text-parchment-50">Foto iOS lista</p>
+            <p className="font-mono text-[10px] text-parchment-400">
+              Vista previa no disponible para HEIC
+            </p>
+            <p className="font-mono text-[9px] uppercase tracking-wider text-parchment-400/60">
+              Se convertirá a JPG al publicar
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-ink-700 bg-ink-900 px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate font-mono text-xs text-parchment-200">{file.name}</p>
+            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-wider text-parchment-400">
+              {(file.size / 1024).toFixed(0)} kb · HEIC
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="font-mono text-[10px] uppercase tracking-[0.2em] text-gold-400 hover:text-gold-300"
+            >
+              Cambiar
+            </button>
+            <button
+              type="button"
+              onClick={clear}
+              className="font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-400 hover:text-ember-400"
+            >
+              Quitar
+            </button>
+          </div>
+        </div>
+        {fileInput}
+      </div>
+    );
+  }
+
+  // ── State 3: empty drop zone ──────────────────────────────────────────────
   return (
     <div>
       <button
@@ -143,13 +201,7 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
           {error}
         </div>
       )}
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif"
-        className="hidden"
-        onChange={(e) => handleFiles(e.target.files)}
-      />
+      {fileInput}
     </div>
   );
 }

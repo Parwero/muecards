@@ -1,26 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient, STORAGE_BUCKET } from '@/lib/supabase';
+import { log } from '@/lib/logger';
 import sharp from 'sharp';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/**
- * POST /api/schedule
- *
- * Accepts multipart/form-data with:
- *   - image:           File  (JPG | PNG | WEBP, <= 8 MB)
- *   - caption:         string
- *   - scheduled_time:  ISO-8601 timestamp
- *
- * Flow:
- *   1. Validate payload.
- *   2. Upload the image to the `post-images` Supabase Storage bucket.
- *   3. Resolve its public URL.
- *   4. Insert a row in `scheduled_posts` with status = 'pending'.
- *
- * On failure at step 3/4 we delete the just-uploaded object to avoid orphans.
- */
 export async function POST(req: NextRequest) {
   try {
     const form = await req.formData();
@@ -30,7 +15,7 @@ export async function POST(req: NextRequest) {
     const caption = form.get('caption');
     const scheduledTime = form.get('scheduled_time');
 
-    // ---- Validation ------------------------------------------------------
+    // ---- Validation -------------------------------------------------------
     if (!(image instanceof File)) {
       return NextResponse.json({ error: 'Falta el archivo de imagen.' }, { status: 400 });
     }
@@ -60,6 +45,7 @@ export async function POST(req: NextRequest) {
     if (image.size > MAX_BYTES) {
       return NextResponse.json({ error: 'Imagen supera 8 MB.' }, { status: 400 });
     }
+
     const isHeic =
       image.type === 'image/heic' ||
       image.type === 'image/heif' ||
@@ -74,64 +60,82 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // ---- 1) Upload to Storage -------------------------------------------
-    const supabase = getServiceClient();
-
+    // ---- 1) Convert / prepare buffer -------------------------------------
     const rawBuffer = Buffer.from(await image.arrayBuffer());
     let finalBuffer: Buffer;
     let contentType: string;
     let ext: string;
 
     if (isHeic) {
-      finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
-      contentType = 'image/jpeg';
-      ext = 'jpg';
+      try {
+        finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
+        contentType = 'image/jpeg';
+        ext = 'jpg';
+      } catch (convErr) {
+        await log({
+          level: 'error',
+          route: '/api/schedule',
+          message: 'HEIC→JPEG conversion failed',
+          details: { filename: image.name, size: image.size, error: String(convErr) },
+        });
+        return NextResponse.json(
+          {
+            error:
+              'No se pudo convertir la imagen HEIC. Abre la foto en Fotos, exporta como JPG e inténtalo de nuevo.',
+          },
+          { status: 400 },
+        );
+      }
     } else {
       finalBuffer = rawBuffer;
       contentType = image.type;
       ext = image.type === 'image/png' ? 'png' : image.type === 'image/webp' ? 'webp' : 'jpg';
     }
 
+    // ---- 2) Upload to Storage --------------------------------------------
+    const supabase = getServiceClient();
     const objectName = `${Date.now()}-${crypto.randomUUID()}.${ext}`;
     const storagePath = `pending/${objectName}`;
-
     const bytes = new Uint8Array(finalBuffer);
 
     const { error: uploadErr } = await supabase.storage
       .from(STORAGE_BUCKET)
-      .upload(storagePath, bytes, {
-        contentType,
-        cacheControl: '3600',
-        upsert: false,
-      });
+      .upload(storagePath, bytes, { contentType, cacheControl: '3600', upsert: false });
 
     if (uploadErr) {
-      console.error('[schedule] upload error', uploadErr);
+      await log({
+        level: 'error',
+        route: '/api/schedule',
+        message: 'Storage upload failed',
+        details: { storagePath, error: uploadErr.message },
+      });
       return NextResponse.json(
         { error: `No se pudo subir la imagen: ${uploadErr.message}` },
         { status: 500 },
       );
     }
 
-    // ---- 2) Public URL ---------------------------------------------------
-    // NOTE: Instagram requires a PUBLICLY fetchable URL. Either the bucket
-    // must be public, or you must use a signed URL (getPublicUrl only works
-    // with a public bucket). Easiest: make `post-images` public.
+    // ---- 3) Public URL ---------------------------------------------------
     const { data: publicUrlData } = supabase.storage
       .from(STORAGE_BUCKET)
       .getPublicUrl(storagePath);
 
     const imageUrl = publicUrlData.publicUrl;
     if (!imageUrl) {
-      // rollback
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+      await log({
+        level: 'error',
+        route: '/api/schedule',
+        message: 'Could not get public URL',
+        details: { storagePath },
+      });
       return NextResponse.json(
         { error: 'No se pudo obtener la URL pública de la imagen.' },
         { status: 500 },
       );
     }
 
-    // ---- 3) Insert row ---------------------------------------------------
+    // ---- 4) Insert row ---------------------------------------------------
     const { data: inserted, error: insertErr } = await supabase
       .from('scheduled_posts')
       .insert({
@@ -140,23 +144,41 @@ export async function POST(req: NextRequest) {
         scheduled_time: new Date(scheduledTime).toISOString(),
         status: 'pending',
         storage_path: storagePath,
+        // title is optional — only included when the column exists in the DB
+        ...(typeof title === 'string' && title.trim() ? { title: title.trim() } : {}),
       })
       .select()
       .single();
 
     if (insertErr) {
-      console.error('[schedule] insert error', insertErr);
-      // rollback the uploaded asset
       await supabase.storage.from(STORAGE_BUCKET).remove([storagePath]);
+      await log({
+        level: 'error',
+        route: '/api/schedule',
+        message: 'DB insert failed',
+        details: { error: insertErr.message, code: insertErr.code },
+      });
       return NextResponse.json(
         { error: `No se pudo guardar el registro: ${insertErr.message}` },
         { status: 500 },
       );
     }
 
+    await log({
+      level: 'info',
+      route: '/api/schedule',
+      message: 'Post scheduled',
+      details: { id: inserted.id, scheduledTime, storagePath },
+    });
+
     return NextResponse.json({ ok: true, post: inserted }, { status: 201 });
   } catch (err) {
-    console.error('[schedule] unexpected', err);
+    await log({
+      level: 'error',
+      route: '/api/schedule',
+      message: 'Unexpected error',
+      details: { error: err instanceof Error ? err.message : String(err) },
+    }).catch(() => {});
     return NextResponse.json(
       { error: err instanceof Error ? err.message : 'Error inesperado.' },
       { status: 500 },

@@ -26,10 +26,24 @@ export default function Page() {
       setPreviewUrl(null);
       return;
     }
+
+    setTitle(file.name.replace(/\.[^/.]+$/, ''));
+
+    // HEIC/HEIF can't be rendered by Chrome/Edge on Windows — skip objectURL
+    const name = file.name.toLowerCase();
+    const isHeic =
+      file.type === 'image/heic' ||
+      file.type === 'image/heif' ||
+      name.endsWith('.heic') ||
+      name.endsWith('.heif');
+
+    if (isHeic) {
+      setPreviewUrl(null);
+      return;
+    }
+
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
-    const nameWithoutExt = file.name.replace(/\.[^/.]+$/, '');
-    setTitle(nameWithoutExt);
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
@@ -85,12 +99,20 @@ export default function Page() {
           <p className="font-mono text-[10px] uppercase tracking-[0.25em] text-parchment-400">
             publicador automático · cada hora en punto
           </p>
-          <Link
-            href="/setup"
-            className="font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-400 transition hover:text-gold-300"
-          >
-            ⚙ Configuración
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/logs"
+              className="font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-400 transition hover:text-gold-300"
+            >
+              ⬡ Logs
+            </Link>
+            <Link
+              href="/setup"
+              className="font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-400 transition hover:text-gold-300"
+            >
+              ⚙ Configuración
+            </Link>
+          </div>
         </div>
       </header>
 
