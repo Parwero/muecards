@@ -45,27 +45,41 @@ export default function Page() {
       return () => URL.revokeObjectURL(url);
     }
 
-    // HEIC: convert to JPEG blob so Chrome/Edge can render it
+    // HEIC: decode via WASM libheif → draw on canvas → blob URL
     let cancelled = false;
     let blobUrl: string | null = null;
     setPreviewUrl(null);
     setPreviewLoading(true);
 
-    import('heic2any')
-      .then(({ default: heic2any }) =>
-        heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 }),
-      )
-      .then((result) => {
+    (async () => {
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const heicDecode = await import('heic-decode').then((m) => m.default ?? m);
+        const { width, height, data } = await heicDecode({ buffer: new Uint8Array(arrayBuffer) });
+
         if (cancelled) return;
-        const blob = Array.isArray(result) ? result[0] : result;
-        blobUrl = URL.createObjectURL(blob);
-        setPreviewUrl(blobUrl);
-        setPreviewLoading(false);
-      })
-      .catch(() => {
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.putImageData(new ImageData(data, width, height), 0, 0);
+
+        canvas.toBlob(
+          (blob) => {
+            if (cancelled || !blob) return;
+            blobUrl = URL.createObjectURL(blob);
+            setPreviewUrl(blobUrl);
+            setPreviewLoading(false);
+          },
+          'image/jpeg',
+          0.9,
+        );
+      } catch {
         if (!cancelled) setPreviewLoading(false);
-        // previewUrl stays null → placeholder shown
-      });
+        // stays null → placeholder
+      }
+    })();
 
     return () => {
       cancelled = true;

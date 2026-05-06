@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServiceClient, STORAGE_BUCKET } from '@/lib/supabase';
 import { log } from '@/lib/logger';
 import sharp from 'sharp';
+import heicDecode = require('heic-decode');
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -68,7 +69,13 @@ export async function POST(req: NextRequest) {
 
     if (isHeic) {
       try {
-        finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
+        // heic-decode uses WASM libheif-js → supports both AVC and HEVC HEIC
+        const { width, height, data } = await heicDecode({ buffer: rawBuffer });
+        finalBuffer = await sharp(Buffer.from(data.buffer), {
+          raw: { width, height, channels: 4 },
+        })
+          .jpeg({ quality: 95 })
+          .toBuffer();
         contentType = 'image/jpeg';
         ext = 'jpg';
       } catch (convErr) {
