@@ -13,7 +13,6 @@ type Toast = { kind: 'ok' | 'err'; message: string } | null;
 export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [previewLoading, setPreviewLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -25,7 +24,6 @@ export default function Page() {
   useEffect(() => {
     if (!file) {
       setPreviewUrl(null);
-      setPreviewLoading(false);
       return;
     }
 
@@ -41,50 +39,13 @@ export default function Page() {
     if (!isHeic) {
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      setPreviewLoading(false);
       return () => URL.revokeObjectURL(url);
     }
 
-    // HEIC: decode via WASM libheif → draw on canvas → blob URL
-    let cancelled = false;
-    let blobUrl: string | null = null;
+    // heic-decode uses Node.js APIs (fs) and cannot run in the browser.
+    // Show the "Foto iOS lista" placeholder — conversion happens server-side on publish.
     setPreviewUrl(null);
-    setPreviewLoading(true);
-
-    (async () => {
-      try {
-        const arrayBuffer = await file.arrayBuffer();
-        const heicDecode = await import('heic-decode').then((m) => m.default ?? m);
-        const { width, height, data } = await heicDecode({ buffer: new Uint8Array(arrayBuffer) });
-
-        if (cancelled) return;
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.putImageData(new ImageData(data, width, height), 0, 0);
-
-        canvas.toBlob(
-          (blob) => {
-            if (cancelled || !blob) return;
-            blobUrl = URL.createObjectURL(blob);
-            setPreviewUrl(blobUrl);
-            setPreviewLoading(false);
-          },
-          'image/jpeg',
-          0.9,
-        );
-      } catch {
-        if (!cancelled) setPreviewLoading(false);
-        // stays null → placeholder
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
-    };
+    setPreviewLoading(false);
   }, [file]);
 
   // Auto-dismiss toasts
@@ -164,7 +125,7 @@ export default function Page() {
             01 · La carta
           </h2>
           <p className="mb-5 font-serif text-2xl text-parchment-50">Imagen</p>
-          <UploadZone file={file} previewUrl={previewUrl} previewLoading={previewLoading} onFileChange={setFile} />
+          <UploadZone file={file} previewUrl={previewUrl} onFileChange={setFile} />
         </section>
 
         {/* Middle: form */}

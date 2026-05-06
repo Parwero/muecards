@@ -71,7 +71,9 @@ export async function POST(req: NextRequest) {
       try {
         // heic-decode uses WASM libheif-js → supports both AVC and HEVC HEIC
         const { width, height, data } = await heicDecode({ buffer: rawBuffer });
-        finalBuffer = await sharp(Buffer.from(data.buffer), {
+        // Buffer.from(TypedArray) copies the view's bytes correctly;
+        // Buffer.from(ArrayBuffer) would include any byteOffset slack.
+        finalBuffer = await sharp(Buffer.from(data), {
           raw: { width, height, channels: 4 },
         })
           .jpeg({ quality: 95 })
