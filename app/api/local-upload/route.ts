@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No se pudo obtener URL pública.' }, { status: 500 });
     }
 
-    // --- Auto-schedule: last pending + 48 h ---
+    // --- Auto-schedule: last pending + 24 h ---
     const { data: lastPost } = await supabase
       .from('scheduled_posts')
       .select('scheduled_time')
@@ -117,11 +117,11 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single();
 
-    const TWO_DAYS_MS = 48 * 60 * 60 * 1000;
+    const DAY_MS = 24 * 60 * 60 * 1000;
     const base = lastPost?.scheduled_time
       ? new Date(lastPost.scheduled_time).getTime()
       : Date.now();
-    const scheduledTime = new Date(base + TWO_DAYS_MS).toISOString();
+    const scheduledTime = new Date(base + DAY_MS).toISOString();
 
     // --- Insert row ---
     const { data: inserted, error: insertErr } = await supabase
