@@ -57,6 +57,14 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     try {
       // redirect:'manual' → a redirect to /login gives type=opaqueredirect, ok=false
       const res = await fetch(`/api/posts/${id}`, { method: 'DELETE', redirect: 'manual' });
+
+      // 404 = already deleted (stale UI state) → remove from list silently
+      if (res.status === 404) {
+        deletedRef.current.add(id);
+        setPosts((prev) => prev.filter((p) => p.id !== id));
+        return;
+      }
+
       if (!res.ok) {
         let msg = `HTTP ${res.status}`;
         try { const d = (await res.json()) as { error?: string }; msg = d.error ?? msg; } catch {}
