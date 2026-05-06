@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       jpegBuffer = await sharp(rawBuffer).jpeg({ quality: 80 }).toBuffer();
     }
 
-    return new NextResponse(jpegBuffer, {
+    return new NextResponse(new Uint8Array(jpegBuffer), {
       headers: {
         'Content-Type': 'image/jpeg',
         'Cache-Control': 'private, max-age=60',
