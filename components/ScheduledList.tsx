@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Clock, Loader2, RefreshCw, Inbox, X } from 'lucide-react';
 import type { ScheduledPost } from '@/types';
 
@@ -34,6 +34,8 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Set<string>>(new Set());
+  // Tracks IDs confirmed deleted so auto-refresh never brings them back
+  const deletedRef = useRef<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
@@ -42,7 +44,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
       const res = await fetch('/api/posts?status=pending', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { posts: ScheduledPost[] };
-      setPosts(data.posts ?? []);
+      setPosts((data.posts ?? []).filter((p) => !deletedRef.current.has(p.id)));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Error desconocido');
     } finally {
@@ -53,11 +55,14 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const cancel = async (id: string) => {
     setDeleting((prev) => new Set(prev).add(id));
     try {
-      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
+      // redirect:'manual' → a redirect to /login gives type=opaqueredirect, ok=false
+      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE', redirect: 'manual' });
       if (!res.ok) {
-        const data = (await res.json()) as { error?: string };
-        throw new Error(data.error ?? `HTTP ${res.status}`);
+        let msg = `HTTP ${res.status}`;
+        try { const d = (await res.json()) as { error?: string }; msg = d.error ?? msg; } catch {}
+        throw new Error(msg);
       }
+      deletedRef.current.add(id);
       setPosts((prev) => prev.filter((p) => p.id !== id));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo cancelar.');
