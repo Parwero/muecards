@@ -13,6 +13,7 @@ type Toast = { kind: 'ok' | 'err'; message: string } | null;
 export default function Page() {
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [title, setTitle] = useState('');
   const [caption, setCaption] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
@@ -20,16 +21,16 @@ export default function Page() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [toast, setToast] = useState<Toast>(null);
 
-  // Create/revoke object URL for preview + auto-fill title from filename
+  // Create preview URL; convert HEIC→JPEG blob on the client before displaying
   useEffect(() => {
     if (!file) {
       setPreviewUrl(null);
+      setPreviewLoading(false);
       return;
     }
 
     setTitle(file.name.replace(/\.[^/.]+$/, ''));
 
-    // HEIC/HEIF can't be rendered by Chrome/Edge on Windows — skip objectURL
     const name = file.name.toLowerCase();
     const isHeic =
       file.type === 'image/heic' ||
@@ -37,14 +38,39 @@ export default function Page() {
       name.endsWith('.heic') ||
       name.endsWith('.heif');
 
-    if (isHeic) {
-      setPreviewUrl(null);
-      return;
+    if (!isHeic) {
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setPreviewLoading(false);
+      return () => URL.revokeObjectURL(url);
     }
 
-    const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
-    return () => URL.revokeObjectURL(url);
+    // HEIC: convert to JPEG blob so Chrome/Edge can render it
+    let cancelled = false;
+    let blobUrl: string | null = null;
+    setPreviewUrl(null);
+    setPreviewLoading(true);
+
+    import('heic2any')
+      .then(({ default: heic2any }) =>
+        heic2any({ blob: file, toType: 'image/jpeg', quality: 0.9 }),
+      )
+      .then((result) => {
+        if (cancelled) return;
+        const blob = Array.isArray(result) ? result[0] : result;
+        blobUrl = URL.createObjectURL(blob);
+        setPreviewUrl(blobUrl);
+        setPreviewLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewLoading(false);
+        // previewUrl stays null → placeholder shown
+      });
+
+    return () => {
+      cancelled = true;
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
+    };
   }, [file]);
 
   // Auto-dismiss toasts
@@ -124,7 +150,7 @@ export default function Page() {
             01 · La carta
           </h2>
           <p className="mb-5 font-serif text-2xl text-parchment-50">Imagen</p>
-          <UploadZone file={file} previewUrl={previewUrl} onFileChange={setFile} />
+          <UploadZone file={file} previewUrl={previewUrl} previewLoading={previewLoading} onFileChange={setFile} />
         </section>
 
         {/* Middle: form */}

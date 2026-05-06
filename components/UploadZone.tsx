@@ -1,11 +1,12 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { ImagePlus, X, FileWarning, Camera } from 'lucide-react';
+import { ImagePlus, X, FileWarning, Camera, Loader2 } from 'lucide-react';
 
 interface UploadZoneProps {
   file: File | null;
   previewUrl: string | null;
+  previewLoading?: boolean;
   onFileChange: (file: File | null) => void;
 }
 
@@ -22,7 +23,7 @@ function isHeicFile(f: File): boolean {
   );
 }
 
-export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) {
+export function UploadZone({ file, previewUrl, previewLoading = false, onFileChange }: UploadZoneProps) {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -111,24 +112,35 @@ export function UploadZone({ file, previewUrl, onFileChange }: UploadZoneProps) 
     );
   }
 
-  // ── State 2: HEIC file selected (no browser preview available) ───────────
+  // ── State 2: HEIC converting or conversion failed ────────────────────────
   if (file && !previewUrl) {
     return (
       <div className="overflow-hidden rounded-sm border border-ink-600 bg-ink-900 shadow-card">
         <div className="flex aspect-[4/5] w-full flex-col items-center justify-center gap-4 bg-ink-950">
-          <div className="relative flex h-16 w-16 items-center justify-center">
-            <div className="absolute inset-0 rotate-45 border border-gold-400/40" />
-            <Camera className="relative h-6 w-6 text-gold-400" strokeWidth={1.5} />
-          </div>
-          <div className="space-y-1 px-8 text-center">
-            <p className="font-serif text-lg text-parchment-50">Foto iOS lista</p>
-            <p className="font-mono text-[10px] text-parchment-400">
-              Vista previa no disponible para HEIC
-            </p>
-            <p className="font-mono text-[9px] uppercase tracking-wider text-parchment-400/60">
-              Se convertirá a JPG al publicar
-            </p>
-          </div>
+          {previewLoading ? (
+            <>
+              <Loader2 className="h-8 w-8 animate-spin text-gold-400" strokeWidth={1.5} />
+              <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-400">
+                Convirtiendo HEIC…
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="relative flex h-16 w-16 items-center justify-center">
+                <div className="absolute inset-0 rotate-45 border border-gold-400/40" />
+                <Camera className="relative h-6 w-6 text-gold-400" strokeWidth={1.5} />
+              </div>
+              <div className="space-y-1 px-8 text-center">
+                <p className="font-serif text-lg text-parchment-50">Foto iOS lista</p>
+                <p className="font-mono text-[10px] text-parchment-400">
+                  Vista previa no disponible
+                </p>
+                <p className="font-mono text-[9px] uppercase tracking-wider text-parchment-400/60">
+                  Se convertirá a JPG al publicar
+                </p>
+              </div>
+            </>
+          )}
         </div>
         <div className="flex items-center justify-between border-t border-ink-700 bg-ink-900 px-4 py-3">
           <div className="min-w-0">
