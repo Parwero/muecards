@@ -189,8 +189,9 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     try {
       const res = await fetch('/api/sync-drive', { method: 'POST' });
       const data = (await res.json()) as {
-        ok?: boolean; uploaded?: number;
-        results?: { file: string; ok: boolean; error?: string }[];
+        ok?: boolean; uploaded?: number; moved?: number;
+        warnings?: string[];
+        results?: { file: string; ok: boolean; moved: boolean; error?: string }[];
         error?: string;
       };
       if (!res.ok) {
@@ -204,13 +205,22 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
         return;
       }
       const uploaded = data.uploaded ?? 0;
+      const moved    = data.moved ?? 0;
       const failed   = (data.results ?? []).filter((r) => !r.ok);
-      setSyncMsg(
-        uploaded === 0 && failed.length === 0
-          ? 'No hay fotos nuevas en la carpeta Por Subir.'
-          : `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''} · originales movidos a Subidas` +
-            (failed.length > 0 ? ` · ${failed.length} con error` : ''),
-      );
+      const notMoved = (data.results ?? []).filter((r) => r.ok && !r.moved);
+
+      let msg: string;
+      if (uploaded === 0 && failed.length === 0) {
+        msg = 'No hay fotos nuevas en la carpeta Por Subir.';
+      } else {
+        msg = `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''}`;
+        if (moved > 0) msg += ` · ${moved} movida${moved !== 1 ? 's' : ''} a Subidas`;
+        if (failed.length > 0) msg += ` · ${failed.length} con error`;
+        if (notMoved.length > 0) {
+          msg += ` · ${notMoved.length} no se pudo${notMoved.length !== 1 ? 'n' : ''} mover (quedan en Por Subir)`;
+        }
+      }
+      setSyncMsg(msg);
       if (uploaded > 0) await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo sincronizar.');

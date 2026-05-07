@@ -1,8 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    // heic-decode / libheif-js embed WASM — must not be webpack-bundled.
-    serverComponentsExternalPackages: ['heic-decode', 'libheif-js'],
+    // sharp is a native module — must not be webpack-bundled so Node.js can
+    // load it with require() at runtime. heic-decode removed (not installed;
+    // sharp handles HEIC natively via libvips).
+    serverComponentsExternalPackages: ['sharp'],
   },
   images: {
     remotePatterns: [
