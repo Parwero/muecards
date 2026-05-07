@@ -185,23 +185,81 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const syncDrive = async () => {
     setSyncing(true); setSyncMsg(null); setError(null);
     try {
-      const res = await fetch('/api/sync-drive', { method: 'POST' });
-      const data = (await res.json()) as {
-        ok?: boolean; uploaded?: number; results?: { file: string; ok: boolean; error?: string }[];
-        error?: string;
-      };
-      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
-      const uploaded = data.uploaded ?? 0;
-      const failed   = (data.results ?? []).filter((r) => !r.ok);
-      if (uploaded === 0 && failed.length === 0) {
-        setSyncMsg('No hay fotos nuevas en la carpeta.');
-      } else {
-        setSyncMsg(
-          `${uploaded} foto${uploaded !== 1 ? 's' : ''} sincronizada${uploaded !== 1 ? 's' : ''}` +
-          (failed.length > 0 ? ` · ${failed.length} error${failed.length !== 1 ? 'es' : ''}` : ''),
-        );
+      const filesToUpload: { file: File; name: string }[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let dirHandle: any = null;
+
+      // File System Access API: lets the user pick a folder and we delete originals after upload
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof window !== 'undefined' && 'showDirectoryPicker' in (window as any)) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
+          const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
+          for await (const [entryName, handle] of dirHandle) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            if ((handle as any).kind !== 'file') continue;
+            const ext = entryName.slice(entryName.lastIndexOf('.')).toLowerCase();
+            if (!IMAGE_EXTS.has(ext)) continue;
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const file: File = await (handle as any).getFile();
+            filesToUpload.push({ file, name: entryName });
+          }
+        } catch (e) {
+          if ((e as { name?: string }).name === 'AbortError') return; // user cancelled picker
+          dirHandle = null; // API failed, fall back to file input
+        }
       }
-      await load();
+
+      // Fallback: regular multi-file input (no delete capability)
+      if (filesToUpload.length === 0 && !dirHandle) {
+        const picked = await new Promise<File[]>((resolve) => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.multiple = true;
+          input.accept = '.jpg,.jpeg,.png,.webp,.heic,.heif,image/*';
+          input.onchange = () => resolve(input.files ? Array.from(input.files) : []);
+          input.oncancel = () => resolve([]);
+          input.click();
+        });
+        picked.forEach((f) => filesToUpload.push({ file: f, name: f.name }));
+      }
+
+      if (filesToUpload.length === 0) {
+        setSyncMsg('No hay fotos en la carpeta seleccionada.');
+        return;
+      }
+
+      let uploaded = 0;
+      let errors   = 0;
+
+      for (const { file, name } of filesToUpload) {
+        try {
+          const form = new FormData();
+          form.append('image', file);
+          form.append('caption', name.replace(/\.[^/.]+$/, ''));
+
+          const res = await fetch('/api/queue-upload', { method: 'POST', body: form });
+          if (!res.ok) {
+            const d = await res.json().catch(() => ({})) as { error?: string };
+            throw new Error(d.error ?? `HTTP ${res.status}`);
+          }
+          uploaded++;
+          // Delete original from source folder if we have directory access
+          if (dirHandle) {
+            try { await dirHandle.removeEntry(name); } catch {}
+          }
+        } catch {
+          errors++;
+        }
+      }
+
+      setSyncMsg(
+        `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''}` +
+        (dirHandle ? ' · originales eliminados' : '') +
+        (errors > 0 ? ` · ${errors} con error` : ''),
+      );
+      if (uploaded > 0) await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo sincronizar.');
     } finally {
