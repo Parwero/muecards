@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Clock, Loader2, RefreshCw, Inbox, X, ImageOff, Check, CloudDownload,
+  Clock, Loader2, RefreshCw, Inbox, X, ImageOff, Check, CloudDownload, CheckCircle2,
 } from 'lucide-react';
 import type { ScheduledPost } from '@/types';
 
@@ -74,6 +74,8 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<string | null>(null);
   const [editTimes, setEditTimes] = useState<Record<string, string>>({});
+  const [history, setHistory] = useState<ScheduledPost[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const deletedRef = useRef<Set<string>>(new Set());
 
   const isDeleted = (id: string) =>
@@ -185,79 +187,29 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const syncDrive = async () => {
     setSyncing(true); setSyncMsg(null); setError(null);
     try {
-      const filesToUpload: { file: File; name: string }[] = [];
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      let dirHandle: any = null;
-
-      // File System Access API: lets the user pick a folder and we delete originals after upload
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (typeof window !== 'undefined' && 'showDirectoryPicker' in (window as any)) {
-        try {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          dirHandle = await (window as any).showDirectoryPicker({ mode: 'readwrite' });
-          const IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.heic', '.heif']);
-          for await (const [entryName, handle] of dirHandle) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            if ((handle as any).kind !== 'file') continue;
-            const ext = entryName.slice(entryName.lastIndexOf('.')).toLowerCase();
-            if (!IMAGE_EXTS.has(ext)) continue;
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const file: File = await (handle as any).getFile();
-            filesToUpload.push({ file, name: entryName });
-          }
-        } catch (e) {
-          if ((e as { name?: string }).name === 'AbortError') return; // user cancelled picker
-          dirHandle = null; // API failed, fall back to file input
+      const res = await fetch('/api/sync-drive', { method: 'POST' });
+      const data = (await res.json()) as {
+        ok?: boolean; uploaded?: number;
+        results?: { file: string; ok: boolean; error?: string }[];
+        error?: string;
+      };
+      if (!res.ok) {
+        const msg = data.error ?? `HTTP ${res.status}`;
+        // Carpeta inaccesible = app corriendo en Vercel, no en local
+        if (msg.includes('no accesible') || msg.includes('no encontrada') || msg.includes('ENOENT')) {
+          setError('La carpeta no está accesible desde este servidor. Ejecuta la app en local (npm run dev) para usar la sincronización automática.');
+        } else {
+          setError(msg);
         }
-      }
-
-      // Fallback: regular multi-file input (no delete capability)
-      if (filesToUpload.length === 0 && !dirHandle) {
-        const picked = await new Promise<File[]>((resolve) => {
-          const input = document.createElement('input');
-          input.type = 'file';
-          input.multiple = true;
-          input.accept = '.jpg,.jpeg,.png,.webp,.heic,.heif,image/*';
-          input.onchange = () => resolve(input.files ? Array.from(input.files) : []);
-          input.oncancel = () => resolve([]);
-          input.click();
-        });
-        picked.forEach((f) => filesToUpload.push({ file: f, name: f.name }));
-      }
-
-      if (filesToUpload.length === 0) {
-        setSyncMsg('No hay fotos en la carpeta seleccionada.');
         return;
       }
-
-      let uploaded = 0;
-      let errors   = 0;
-
-      for (const { file, name } of filesToUpload) {
-        try {
-          const form = new FormData();
-          form.append('image', file);
-          form.append('caption', name.replace(/\.[^/.]+$/, ''));
-
-          const res = await fetch('/api/queue-upload', { method: 'POST', body: form });
-          if (!res.ok) {
-            const d = await res.json().catch(() => ({})) as { error?: string };
-            throw new Error(d.error ?? `HTTP ${res.status}`);
-          }
-          uploaded++;
-          // Delete original from source folder if we have directory access
-          if (dirHandle) {
-            try { await dirHandle.removeEntry(name); } catch {}
-          }
-        } catch {
-          errors++;
-        }
-      }
-
+      const uploaded = data.uploaded ?? 0;
+      const failed   = (data.results ?? []).filter((r) => !r.ok);
       setSyncMsg(
-        `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''}` +
-        (dirHandle ? ' · originales eliminados' : '') +
-        (errors > 0 ? ` · ${errors} con error` : ''),
+        uploaded === 0 && failed.length === 0
+          ? 'No hay fotos nuevas en la carpeta Por Subir.'
+          : `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''} · originales movidos a Subidas` +
+            (failed.length > 0 ? ` · ${failed.length} con error` : ''),
       );
       if (uploaded > 0) await load();
     } catch (e) {
@@ -267,13 +219,28 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     }
   };
 
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch('/api/posts?status=published', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { posts: ScheduledPost[] };
+      setHistory((data.posts ?? []).reverse()); // most recent first
+    } catch {
+      // history is non-critical; fail silently
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
   useEffect(() => {
     load();
+    loadHistory();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
   useEffect(() => {
-    const id = setInterval(load, 30_000);
+    const id = setInterval(() => { load(); loadHistory(); }, 30_000);
     return () => clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -442,6 +409,63 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
                 </div>
               </li>
             ))}
+          </ul>
+        )}
+      </section>
+
+      {/* ── Historial ────────────────────────────────────── */}
+      <section className="flex flex-col">
+        <header className="mb-4">
+          <h2 className="font-serif text-xl text-parchment-50">Historial</h2>
+          <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-400">
+            {historyLoading ? 'cargando…' : `${history.length} publicada${history.length !== 1 ? 's' : ''}`}
+          </p>
+        </header>
+
+        <div className="rule-gold mb-4" />
+
+        {historyLoading && history.length === 0 ? (
+          <div className="flex items-center justify-center py-8 text-parchment-400">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : history.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <Inbox className="h-5 w-5 text-parchment-400/60" strokeWidth={1.5} />
+            <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-400">
+              sin publicaciones aún
+            </p>
+          </div>
+        ) : (
+          <ul className="-mx-1 space-y-2 pr-1">
+            {history.map((post) => {
+              const d = new Date(post.scheduled_time);
+              const dateStr = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+              const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+              return (
+                <li
+                  key={post.id}
+                  className="flex gap-3 rounded-sm border border-ink-700 bg-ink-900/40 p-2.5 opacity-80 transition hover:opacity-100"
+                >
+                  <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
+                    {post.image_url && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={post.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
+                    )}
+                  </div>
+                  <div className="flex min-w-0 flex-1 flex-col justify-between">
+                    <p className="line-clamp-2 font-serif text-xs leading-snug text-parchment-300">
+                      {post.caption || <span className="italic text-parchment-500">Sin descripción</span>}
+                    </p>
+                    <div className="flex items-center gap-1.5 font-mono text-[10px] text-parchment-500">
+                      <CheckCircle2 className="h-3 w-3 text-green-500/70" />
+                      <span>{dateStr}</span>
+                      <span className="text-ink-500">·</span>
+                      <span>{timeStr}</span>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>
