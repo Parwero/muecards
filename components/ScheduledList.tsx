@@ -195,13 +195,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
         error?: string;
       };
       if (!res.ok) {
-        const msg = data.error ?? `HTTP ${res.status}`;
-        // Carpeta inaccesible = app corriendo en Vercel, no en local
-        if (msg.includes('no accesible') || msg.includes('no encontrada') || msg.includes('ENOENT')) {
-          setError('La carpeta no está accesible desde este servidor. Ejecuta la app en local (npm run dev) para usar la sincronización automática.');
-        } else {
-          setError(msg);
-        }
+        setError(data.error ?? `HTTP ${res.status}`);
         return;
       }
       const uploaded = data.uploaded ?? 0;
