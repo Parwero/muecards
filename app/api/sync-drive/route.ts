@@ -32,6 +32,20 @@ const EXT_FOR_MIME: Record<string, string> = {
 };
 
 /**
+ * Converts a HEIC/HEIF buffer to JPEG.
+ * Strategy: heic-decode (WASM, no native deps) → raw pixels → sharp JPEG encode.
+ * If both fail, throws so the caller can decide what to do.
+ */
+async function convertHeicToJpeg(input: Buffer): Promise<Buffer> {
+  const { default: heicDecode } = await import('heic-decode');
+  const { default: sharp } = await import('sharp');
+  const { width, height, data } = await heicDecode({ buffer: input });
+  return sharp(Buffer.from(data), { raw: { width, height, channels: 4 } })
+    .jpeg({ quality: 92 })
+    .toBuffer();
+}
+
+/**
  * Creates a short-lived Google OAuth access token using a service account JSON.
  * Uses Node.js built-in `crypto` to sign the JWT — no external packages needed.
  */
@@ -180,17 +194,9 @@ export async function POST(_req: NextRequest) {
       let outExt: string;
 
       if (isHeic) {
-        try {
-          const { default: sharp } = await import('sharp');
-          finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
-          contentType = 'image/jpeg';
-          outExt = 'jpg';
-        } catch {
-          // sharp not available or HEIC conversion failed — upload raw
-          finalBuffer = rawBuffer;
-          contentType = file.mimeType;
-          outExt = 'heic';
-        }
+        finalBuffer = await convertHeicToJpeg(rawBuffer);
+        contentType = 'image/jpeg';
+        outExt = 'jpg';
       } else {
         finalBuffer = rawBuffer;
         contentType = file.mimeType;
