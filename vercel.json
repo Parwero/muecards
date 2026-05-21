@@ -1,6 +1,10 @@
 {
   "crons": [
     {
+      "path": "/api/cron/sync-drive",
+      "schedule": "0 7 * * *"
+    },
+    {
       "path": "/api/publish",
       "schedule": "0 8 * * *"
     }
