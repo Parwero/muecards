@@ -2,58 +2,76 @@
 
 import { useEffect, useRef, useState } from 'react';
 import {
-  Clock, Loader2, RefreshCw, Inbox, X, ImageOff, Check, CloudDownload, CheckCircle2,
+  Clock, Loader2, RefreshCw, Inbox, X, ImageOff, Check,
+  CloudDownload, CheckCircle2, HardDriveDownload,
 } from 'lucide-react';
 import type { ScheduledPost } from '@/types';
+
+// ── Types ────────────────────────────────────────────────────────────────────
 
 interface ScheduledListProps {
   refreshKey: number;
 }
 
+interface DriveFile {
+  id: string;
+  name: string;
+  mimeType: string;
+}
+
+// ── Constants ────────────────────────────────────────────────────────────────
+
 const SENTINEL_YEAR = 2090;
-const DAY_MS = 24 * 60 * 60 * 1000;
-const LS_KEY = 'mue_deleted_ids';
+const DAY_MS        = 24 * 60 * 60 * 1000;
+const LS_KEY        = 'mue_deleted_ids';
+
+// ── localStorage helpers ─────────────────────────────────────────────────────
 
 function loadDeletedFromStorage(): Set<string> {
   try { return new Set(JSON.parse(localStorage.getItem(LS_KEY) ?? '[]') as string[]); }
   catch { return new Set(); }
 }
+
 function persistDeleted(id: string) {
   try {
-    const ids = loadDeletedFromStorage(); ids.add(id);
+    const ids = loadDeletedFromStorage();
+    ids.add(id);
     localStorage.setItem(LS_KEY, JSON.stringify([...ids].slice(-200)));
   } catch {}
 }
 
-function isLocalQueued(post: ScheduledPost) {
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function isLegacyUnconfirmed(post: ScheduledPost) {
   return new Date(post.scheduled_time).getFullYear() >= SENTINEL_YEAR;
 }
 
 function formatWhen(iso: string) {
-  const d = new Date(iso);
-  const now = new Date();
+  const d      = new Date(iso);
+  const now    = new Date();
   const diffMs = d.getTime() - now.getTime();
-  const diffMin = Math.round(diffMs / 60000);
-  const diffH = Math.round(diffMs / 3_600_000);
-  const diffD = Math.round(diffMs / 86_400_000);
+  const diffMin = Math.round(diffMs / 60_000);
+  const diffH   = Math.round(diffMs / 3_600_000);
+  const diffD   = Math.round(diffMs / 86_400_000);
+
   let relative: string;
-  if (Math.abs(diffMin) < 60) relative = diffMin >= 0 ? `en ${diffMin}m` : `hace ${-diffMin}m`;
-  else if (Math.abs(diffH) < 24) relative = diffH >= 0 ? `en ${diffH}h` : `hace ${-diffH}h`;
-  else relative = diffD >= 0 ? `en ${diffD}d` : `hace ${-diffD}d`;
+  if (Math.abs(diffMin) < 60)  relative = diffMin >= 0 ? `en ${diffMin}m`  : `hace ${-diffMin}m`;
+  else if (Math.abs(diffH) < 24) relative = diffH  >= 0 ? `en ${diffH}h`   : `hace ${-diffH}h`;
+  else                           relative = diffD  >= 0 ? `en ${diffD}d`   : `hace ${-diffD}d`;
+
   return {
-    date: d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-    time: d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+    date:     d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
+    time:     d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
     relative,
   };
 }
 
 function toDatetimeLocal(iso: string) {
-  const d = new Date(iso);
+  const d   = new Date(iso);
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-/** Calculates next available 09:00 slot after all currently scheduled posts */
 function nextSlot(scheduledPosts: ScheduledPost[], offsetDays = 1): string {
   const lastMs = scheduledPosts.reduce(
     (max, p) => Math.max(max, new Date(p.scheduled_time).getTime()),
@@ -64,41 +82,52 @@ function nextSlot(scheduledPosts: ScheduledPost[], offsetDays = 1): string {
   return toDatetimeLocal(next.toISOString());
 }
 
+// ── Component ────────────────────────────────────────────────────────────────
+
 export function ScheduledList({ refreshKey }: ScheduledListProps) {
-  const [posts, setPosts] = useState<ScheduledPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState<Set<string>>(new Set());
-  const [saving, setSaving] = useState<Set<string>>(new Set());
-  const [confirming, setConfirming] = useState<Set<string>>(new Set());
-  const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState<string | null>(null);
-  const [editTimes, setEditTimes] = useState<Record<string, string>>({});
-  const [history, setHistory] = useState<ScheduledPost[]>([]);
+  // DB posts
+  const [posts,          setPosts]          = useState<ScheduledPost[]>([]);
+  const [loading,        setLoading]        = useState(true);
+  const [error,          setError]          = useState<string | null>(null);
+  const [deleting,       setDeleting]       = useState<Set<string>>(new Set());
+  const [saving,         setSaving]         = useState<Set<string>>(new Set());
+  const [confirming,     setConfirming]     = useState<Set<string>>(new Set());
+  const [editTimes,      setEditTimes]      = useState<Record<string, string>>({});
+
+  // Drive files (not yet in Supabase)
+  const [driveFiles,      setDriveFiles]      = useState<DriveFile[]>([]);
+  const [driveFetching,   setDriveFetching]   = useState(false);
+  const [driveImporting,  setDriveImporting]  = useState<Set<string>>(new Set());
+  const [driveEditTimes,  setDriveEditTimes]  = useState<Record<string, string>>({});
+  const [driveMsg,        setDriveMsg]        = useState<string | null>(null);
+
+  // History
+  const [history,        setHistory]        = useState<ScheduledPost[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+
   const deletedRef = useRef<Set<string>>(new Set());
 
   const isDeleted = (id: string) =>
     deletedRef.current.has(id) || loadDeletedFromStorage().has(id);
 
+  // ── Load DB posts ──────────────────────────────────────────────────────────
+
   const load = async () => {
-    setLoading(true); setError(null);
+    setLoading(true);
+    setError(null);
     try {
-      const res = await fetch('/api/posts?status=pending', { cache: 'no-store' });
+      const res  = await fetch('/api/posts?status=pending', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { posts: ScheduledPost[] };
-      const allPosts = (data.posts ?? []).filter((p) => !isDeleted(p.id));
-      setPosts(allPosts);
+      const all  = (data.posts ?? []).filter((p) => !isDeleted(p.id));
+      setPosts(all);
 
-      // Pre-fill edit times for localQueued posts so they have a sensible default
-      const scheduledPosts = allPosts.filter((p) => !isLocalQueued(p));
-      const lq = allPosts.filter((p) => isLocalQueued(p));
+      const scheduled = all.filter((p) => !isLegacyUnconfirmed(p));
+      const legacy    = all.filter((p) =>  isLegacyUnconfirmed(p));
       setEditTimes((prev) => {
         const next = { ...prev };
-        lq.forEach((post, i) => {
-          if (!next[post.id]) {
-            next[post.id] = nextSlot(scheduledPosts, i + 1);
-          }
+        legacy.forEach((post, i) => {
+          if (!next[post.id]) next[post.id] = nextSlot(scheduled, i + 1);
         });
         return next;
       });
@@ -109,8 +138,99 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     }
   };
 
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res  = await fetch('/api/posts?status=published', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = (await res.json()) as { posts: ScheduledPost[] };
+      setHistory((data.posts ?? []).reverse());
+    } catch {
+      // non-critical
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // ── List Drive files (no download) ────────────────────────────────────────
+
+  const listDrive = async () => {
+    setDriveFetching(true);
+    setDriveMsg(null);
+    setError(null);
+    try {
+      const res  = await fetch('/api/drive-list');
+      const data = (await res.json()) as { files?: DriveFile[]; error?: string };
+      if (!res.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
+
+      const files = data.files ?? [];
+      setDriveFiles(files);
+
+      const scheduled = posts.filter((p) => !isLegacyUnconfirmed(p));
+      setDriveEditTimes((prev) => {
+        const next = { ...prev };
+        files.forEach((f, i) => {
+          if (!next[f.id]) next[f.id] = nextSlot(scheduled, i + 1);
+        });
+        return next;
+      });
+
+      if (files.length === 0) {
+        setDriveMsg('No hay fotos nuevas en la carpeta Por Subir.');
+      } else {
+        setDriveMsg(`${files.length} foto${files.length !== 1 ? 's' : ''} listas para importar.`);
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo conectar con Drive.');
+    } finally {
+      setDriveFetching(false);
+    }
+  };
+
+  // ── Import one Drive file ─────────────────────────────────────────────────
+
+  const importDriveFile = async (file: DriveFile) => {
+    const timeStr = driveEditTimes[file.id];
+    if (!timeStr) return;
+
+    setDriveImporting((prev) => new Set(prev).add(file.id));
+    setError(null);
+    try {
+      const res = await fetch('/api/drive-import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driveFileId:   file.id,
+          driveName:     file.name,
+          driveFileMime: file.mimeType,
+          scheduledTime: new Date(timeStr).toISOString(),
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string; warning?: string };
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+
+      // Remove from Drive list and refresh DB posts
+      setDriveFiles((prev) => prev.filter((f) => f.id !== file.id));
+      setDriveEditTimes((prev) => { const n = { ...prev }; delete n[file.id]; return n; });
+      if (data.warning) setDriveMsg(`Importado · ${data.warning}`);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo importar.');
+    } finally {
+      setDriveImporting((prev) => { const n = new Set(prev); n.delete(file.id); return n; });
+    }
+  };
+
+  const ignoreDriveFile = (id: string) => {
+    setDriveFiles((prev) => prev.filter((f) => f.id !== id));
+    setDriveEditTimes((prev) => { const n = { ...prev }; delete n[id]; return n; });
+  };
+
+  // ── DB post actions ───────────────────────────────────────────────────────
+
   const markDeleted = (id: string) => {
-    deletedRef.current.add(id); persistDeleted(id);
+    deletedRef.current.add(id);
+    persistDeleted(id);
     setPosts((prev) => prev.filter((p) => p.id !== id));
     setEditTimes((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
@@ -134,8 +254,10 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   };
 
   const saveTime = async (id: string) => {
-    const newTime = editTimes[id]; if (!newTime) return;
-    setSaving((prev) => new Set(prev).add(id)); setError(null);
+    const newTime = editTimes[id];
+    if (!newTime) return;
+    setSaving((prev) => new Set(prev).add(id));
+    setError(null);
     try {
       const res = await fetch(`/api/posts/${id}`, {
         method: 'PATCH',
@@ -157,11 +279,12 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     }
   };
 
-  // Confirms a local_queued post: sets its scheduled_time to the chosen date
-  const confirm = async (id: string) => {
+  // Confirm a legacy date=2099 post (already in Supabase, just needs a real date)
+  const confirmLegacy = async (id: string) => {
     const timeStr = editTimes[id];
     if (!timeStr) return;
-    setConfirming((prev) => new Set(prev).add(id)); setError(null);
+    setConfirming((prev) => new Set(prev).add(id));
+    setError(null);
     try {
       const nextTime = new Date(timeStr).toISOString();
       const res = await fetch(`/api/posts/${id}`, {
@@ -184,66 +307,12 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     }
   };
 
-  const syncDrive = async () => {
-    setSyncing(true); setSyncMsg(null); setError(null);
-    try {
-      const res = await fetch('/api/sync-drive', { method: 'POST' });
-      const data = (await res.json()) as {
-        ok?: boolean; uploaded?: number; moved?: number;
-        warnings?: string[];
-        results?: { file: string; ok: boolean; moved: boolean; error?: string }[];
-        error?: string;
-      };
-      if (!res.ok) {
-        setError(data.error ?? `HTTP ${res.status}`);
-        return;
-      }
-      const uploaded = data.uploaded ?? 0;
-      const moved    = data.moved ?? 0;
-      const failed   = (data.results ?? []).filter((r) => !r.ok);
-      const notMoved = (data.results ?? []).filter((r) => r.ok && !r.moved);
-
-      let msg: string;
-      if (uploaded === 0 && failed.length === 0) {
-        msg = 'No hay fotos nuevas en la carpeta Por Subir.';
-      } else {
-        msg = `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''}`;
-        if (moved > 0) msg += ` · ${moved} movida${moved !== 1 ? 's' : ''} a Subidas`;
-        if (failed.length > 0) {
-          msg += ` · ${failed.length} con error`;
-          const firstErr = failed[0]?.error;
-          if (firstErr) msg += `: ${firstErr.substring(0, 120)}`;
-        }
-        if (notMoved.length > 0) {
-          msg += ` · ${notMoved.length} no se pudo${notMoved.length !== 1 ? 'n' : ''} mover (quedan en Por Subir)`;
-        }
-      }
-      setSyncMsg(msg);
-      if (uploaded > 0) await load();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo sincronizar.');
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const loadHistory = async () => {
-    setHistoryLoading(true);
-    try {
-      const res = await fetch('/api/posts?status=published', { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as { posts: ScheduledPost[] };
-      setHistory((data.posts ?? []).reverse()); // most recent first
-    } catch {
-      // history is non-critical; fail silently
-    } finally {
-      setHistoryLoading(false);
-    }
-  };
+  // ── Effects ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
     load();
     loadHistory();
+    listDrive();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
@@ -253,8 +322,13 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const scheduled   = posts.filter((p) => !isLocalQueued(p));
-  const localQueued = posts.filter((p) => isLocalQueued(p));
+  // ── Derived state ─────────────────────────────────────────────────────────
+
+  const scheduled     = posts.filter((p) => !isLegacyUnconfirmed(p));
+  const legacyPending = posts.filter((p) =>  isLegacyUnconfirmed(p));
+  const hasPorSubir   = driveFiles.length > 0 || legacyPending.length > 0;
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div className="flex flex-col gap-8">
@@ -294,7 +368,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
             <Inbox className="h-6 w-6 text-parchment-400/60" strokeWidth={1.5} />
             <p className="font-serif text-lg text-parchment-200">La cola está vacía</p>
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-400">
-              programa tu primera carta
+              confirma una foto de abajo para añadirla
             </p>
           </div>
         ) : (
@@ -351,73 +425,161 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
           <div>
             <h2 className="font-serif text-xl text-parchment-50">Por subir</h2>
             <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.2em] text-parchment-400">
-              {loading ? 'cargando…' : `${localQueued.length} pendientes de confirmar`}
+              {driveFetching
+                ? 'consultando Drive…'
+                : `${driveFiles.length + legacyPending.length} pendientes de confirmar`}
             </p>
           </div>
           <button
             type="button"
-            onClick={syncDrive}
-            disabled={syncing}
+            onClick={listDrive}
+            disabled={driveFetching}
             className="flex items-center gap-1.5 rounded-sm border border-ink-600 px-2.5 py-1.5 font-mono text-[10px] uppercase tracking-wider text-parchment-300 transition hover:border-gold-500/60 hover:text-gold-300 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <CloudDownload className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'sincronizando…' : 'sincronizar con drive'}
+            <CloudDownload className={`h-3.5 w-3.5 ${driveFetching ? 'animate-spin' : ''}`} />
+            {driveFetching ? 'consultando…' : 'sincronizar con drive'}
           </button>
         </header>
 
-        {syncMsg && (
+        {driveMsg && (
           <div className="mb-3 border-l-2 border-gold-500/60 bg-gold-500/5 px-3 py-2 font-mono text-xs text-gold-300">
-            {syncMsg}
+            {driveMsg}
           </div>
         )}
 
         <div className="rule-gold mb-4" />
 
-        {localQueued.length === 0 ? (
+        {!hasPorSubir ? (
           <div className="flex flex-col items-center gap-2 py-8 text-center">
             <Inbox className="h-5 w-5 text-parchment-400/60" strokeWidth={1.5} />
             <p className="font-mono text-[11px] uppercase tracking-[0.2em] text-parchment-400">
-              sin archivos pendientes · pulsa sincronizar para importar
+              sin archivos pendientes · pulsa sincronizar para consultar Drive
             </p>
           </div>
         ) : (
-          <ul className="-mx-1 space-y-3 pr-1">
-            {localQueued.map((post) => (
-              <li
-                key={post.id}
-                className={`flex gap-3 rounded-sm border bg-ink-900/50 p-3 transition ${
-                  deleting.has(post.id) ? 'border-ink-700 opacity-50' : 'border-ink-700 hover:border-gold-500/30'
-                }`}
-              >
-                <Thumbnail url={post.image_url} />
-                <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-                  <div className="flex items-start gap-1">
-                    <p className="line-clamp-3 flex-1 font-serif text-sm leading-snug text-parchment-200">
-                      {post.caption || <span className="italic text-parchment-400">Sin descripción</span>}
-                    </p>
-                    <CancelBtn onClick={() => cancel(post.id)} loading={deleting.has(post.id)} />
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="datetime-local"
-                      value={editTimes[post.id] ?? ''}
-                      onChange={(e) => setEditTimes((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                      className="flex-1 rounded-sm border border-ink-600 bg-ink-950 px-1.5 py-0.5 font-mono text-[10px] text-parchment-300 focus:border-gold-500/60 focus:outline-none"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => confirm(post.id)}
-                      disabled={!editTimes[post.id] || confirming.has(post.id)}
-                      aria-label="Confirmar fecha"
-                      className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-gold-500/50 text-gold-400 transition hover:bg-gold-500/10 disabled:cursor-not-allowed disabled:border-ink-600 disabled:text-parchment-600"
+          <div className="flex flex-col gap-6">
+
+            {/* Drive files — not yet uploaded to Supabase */}
+            {driveFiles.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <p className="flex items-center gap-1.5 font-mono text-[9px] uppercase tracking-[0.2em] text-gold-400/70">
+                  <HardDriveDownload className="h-3 w-3" />
+                  de google drive · confirmar para importar
+                </p>
+                <ul className="-mx-1 space-y-3 pr-1">
+                  {driveFiles.map((file) => (
+                    <li
+                      key={file.id}
+                      className={`flex gap-3 rounded-sm border bg-ink-900/50 p-3 transition ${
+                        driveImporting.has(file.id) ? 'border-ink-700 opacity-50' : 'border-gold-500/20 hover:border-gold-500/40'
+                      }`}
                     >
-                      {confirming.has(post.id) ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
-                    </button>
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                      {/* Thumbnail proxied through our API */}
+                      <div className="relative h-24 w-[4.5rem] shrink-0 overflow-hidden rounded-sm border border-ink-700 bg-ink-950">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/drive-thumbnail?id=${file.id}&mime=${encodeURIComponent(file.mimeType)}`}
+                          alt=""
+                          className="h-full w-full object-cover"
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                            const ph = e.currentTarget.nextElementSibling as HTMLElement | null;
+                            if (ph) ph.style.display = 'flex';
+                          }}
+                        />
+                        <div className="absolute inset-0 items-center justify-center" style={{ display: 'none' }}>
+                          <ImageOff className="h-5 w-5 text-parchment-600" strokeWidth={1.5} />
+                        </div>
+                      </div>
+
+                      <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                        <div className="flex items-start gap-1">
+                          <p className="line-clamp-3 flex-1 font-serif text-sm leading-snug text-parchment-200">
+                            {file.name.replace(/\.[^/.]+$/, '') || <span className="italic text-parchment-400">Sin nombre</span>}
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => ignoreDriveFile(file.id)}
+                            disabled={driveImporting.has(file.id)}
+                            aria-label="Ignorar"
+                            className="ml-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-ink-600 text-parchment-500 transition hover:border-ember-500/50 hover:text-ember-400 disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="datetime-local"
+                            value={driveEditTimes[file.id] ?? ''}
+                            onChange={(e) => setDriveEditTimes((prev) => ({ ...prev, [file.id]: e.target.value }))}
+                            className="flex-1 rounded-sm border border-ink-600 bg-ink-950 px-1.5 py-0.5 font-mono text-[10px] text-parchment-300 focus:border-gold-500/60 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => importDriveFile(file)}
+                            disabled={!driveEditTimes[file.id] || driveImporting.has(file.id)}
+                            aria-label="Confirmar e importar"
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-gold-500/50 text-gold-400 transition hover:bg-gold-500/10 disabled:cursor-not-allowed disabled:border-ink-600 disabled:text-parchment-600"
+                          >
+                            {driveImporting.has(file.id) ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Legacy: DB posts with sentinel date=2099 (imported via old sync-drive) */}
+            {legacyPending.length > 0 && (
+              <div className="flex flex-col gap-3">
+                {driveFiles.length > 0 && (
+                  <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-parchment-500">
+                    ya en supabase · pendientes de fecha
+                  </p>
+                )}
+                <ul className="-mx-1 space-y-3 pr-1">
+                  {legacyPending.map((post) => (
+                    <li
+                      key={post.id}
+                      className={`flex gap-3 rounded-sm border bg-ink-900/50 p-3 transition ${
+                        deleting.has(post.id) ? 'border-ink-700 opacity-50' : 'border-ink-700 hover:border-gold-500/30'
+                      }`}
+                    >
+                      <Thumbnail url={post.image_url} />
+                      <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                        <div className="flex items-start gap-1">
+                          <p className="line-clamp-3 flex-1 font-serif text-sm leading-snug text-parchment-200">
+                            {post.caption || <span className="italic text-parchment-400">Sin descripción</span>}
+                          </p>
+                          <CancelBtn onClick={() => cancel(post.id)} loading={deleting.has(post.id)} />
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="datetime-local"
+                            value={editTimes[post.id] ?? ''}
+                            onChange={(e) => setEditTimes((prev) => ({ ...prev, [post.id]: e.target.value }))}
+                            className="flex-1 rounded-sm border border-ink-600 bg-ink-950 px-1.5 py-0.5 font-mono text-[10px] text-parchment-300 focus:border-gold-500/60 focus:outline-none"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => confirmLegacy(post.id)}
+                            disabled={!editTimes[post.id] || confirming.has(post.id)}
+                            aria-label="Confirmar fecha"
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-sm border border-gold-500/50 text-gold-400 transition hover:bg-gold-500/10 disabled:cursor-not-allowed disabled:border-ink-600 disabled:text-parchment-600"
+                          >
+                            {confirming.has(post.id) ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         )}
       </section>
 
@@ -446,7 +608,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
         ) : (
           <ul className="-mx-1 space-y-2 pr-1">
             {history.map((post) => {
-              const d = new Date(post.scheduled_time);
+              const d       = new Date(post.scheduled_time);
               const dateStr = d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
               const timeStr = d.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
               return (
@@ -482,7 +644,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   );
 }
 
-// ── Componentes auxiliares ────────────────────────────────────────────────────
+// ── Subcomponentes ────────────────────────────────────────────────────────────
 
 function Thumbnail({ url }: { url: string }) {
   return (
