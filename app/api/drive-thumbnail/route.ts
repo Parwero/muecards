@@ -59,7 +59,7 @@ export async function GET(req: NextRequest) {
       .jpeg({ quality: 80 })
       .toBuffer();
 
-    return new NextResponse(thumbnail, {
+    return new NextResponse(new Uint8Array(thumbnail), {
       headers: {
         'Content-Type': 'image/jpeg',
         'Cache-Control': 'public, max-age=86400, s-maxage=86400',
