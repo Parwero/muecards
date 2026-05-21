@@ -1,5 +1,3 @@
-import { createSign } from 'crypto';
-
 interface ServiceAccountCreds {
   client_email: string;
   private_key: string;
@@ -25,6 +23,9 @@ export async function getGoogleAccessToken(credsJson: string): Promise<string> {
     iat:   now,
   })).toString('base64url');
 
+  // Dynamic import keeps the Node.js-only 'crypto' module out of the static
+  // module graph so webpack does not try to bundle it for non-nodejs contexts.
+  const { createSign } = await import('crypto');
   const signer = createSign('RSA-SHA256');
   signer.update(`${header}.${payload}`);
   const signature = signer.sign(privateKey, 'base64url');

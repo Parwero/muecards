@@ -4,7 +4,7 @@ const nextConfig = {
     // Prevent webpack from bundling native/WASM packages that must be loaded
     // by Node.js at runtime. heic-decode uses @napi-rs/wasm-runtime (WASM)
     // and sharp uses native binaries — both must be kept external.
-    serverComponentsExternalPackages: ['sharp', 'heic-decode'],
+    serverComponentsExternalPackages: ['sharp', 'heic-decode', 'crypto'],
   },
   images: {
     remotePatterns: [
