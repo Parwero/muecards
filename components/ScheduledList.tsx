@@ -100,6 +100,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const [driveImporting,  setDriveImporting]  = useState<Set<string>>(new Set());
   const [driveEditTimes,  setDriveEditTimes]  = useState<Record<string, string>>({});
   const [driveMsg,        setDriveMsg]        = useState<string | null>(null);
+  const [driveError,      setDriveError]      = useState<string | null>(null);
 
   // History
   const [history,        setHistory]        = useState<ScheduledPost[]>([]);
@@ -157,11 +158,11 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
   const listDrive = async () => {
     setDriveFetching(true);
     setDriveMsg(null);
-    setError(null);
+    setDriveError(null);
     try {
       const res  = await fetch('/api/drive-list');
       const data = (await res.json()) as { files?: DriveFile[]; error?: string };
-      if (!res.ok) { setError(data.error ?? `HTTP ${res.status}`); return; }
+      if (!res.ok) { setDriveError(data.error ?? `HTTP ${res.status}`); return; }
 
       const files = data.files ?? [];
       setDriveFiles(files);
@@ -181,7 +182,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
         setDriveMsg(`${files.length} foto${files.length !== 1 ? 's' : ''} listas para importar.`);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo conectar con Drive.');
+      setDriveError(e instanceof Error ? e.message : 'No se pudo conectar con Drive.');
     } finally {
       setDriveFetching(false);
     }
@@ -194,7 +195,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     if (!timeStr) return;
 
     setDriveImporting((prev) => new Set(prev).add(file.id));
-    setError(null);
+    setDriveError(null);
     try {
       const res = await fetch('/api/drive-import', {
         method: 'POST',
@@ -212,10 +213,14 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
       // Remove from Drive list and refresh DB posts
       setDriveFiles((prev) => prev.filter((f) => f.id !== file.id));
       setDriveEditTimes((prev) => { const n = { ...prev }; delete n[file.id]; return n; });
-      if (data.warning) setDriveMsg(`Importado · ${data.warning}`);
+      if (data.warning) {
+        setDriveMsg(`Importado · ${data.warning}`);
+      } else {
+        setDriveMsg('Foto añadida a la cola correctamente.');
+      }
       await load();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo importar.');
+      setDriveError(e instanceof Error ? e.message : 'No se pudo importar.');
     } finally {
       setDriveImporting((prev) => { const n = new Set(prev); n.delete(file.id); return n; });
     }
@@ -309,13 +314,20 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
 
   // ── Effects ───────────────────────────────────────────────────────────────
 
+  // Refresh DB posts + history whenever parent signals an update (e.g. after direct upload)
   useEffect(() => {
     load();
     loadHistory();
-    listDrive();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshKey]);
 
+  // Fetch Drive file list once on mount (user can also refresh manually with the button)
+  useEffect(() => {
+    listDrive();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-refresh DB posts every 30 s
   useEffect(() => {
     const id = setInterval(() => { load(); loadHistory(); }, 30_000);
     return () => clearInterval(id);
@@ -444,6 +456,12 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
         {driveMsg && (
           <div className="mb-3 border-l-2 border-gold-500/60 bg-gold-500/5 px-3 py-2 font-mono text-xs text-gold-300">
             {driveMsg}
+          </div>
+        )}
+
+        {driveError && (
+          <div className="mb-3 border-l-2 border-ember-500 bg-ember-500/5 px-3 py-2 font-mono text-xs text-ember-500">
+            {driveError}
           </div>
         )}
 
