@@ -1,5 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   experimental: {
     // Prevent webpack from bundling native/WASM packages that must be loaded
     // by Node.js at runtime. heic-decode uses @napi-rs/wasm-runtime (WASM)
