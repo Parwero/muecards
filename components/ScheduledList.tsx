@@ -120,11 +120,22 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
       const res  = await fetch('/api/posts?status=pending', { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as { posts: ScheduledPost[] };
-      const all  = (data.posts ?? []).filter((p) => !isDeleted(p.id));
-      setPosts(all);
+      const fetched = (data.posts ?? []).filter((p) => !isDeleted(p.id));
 
-      const scheduled = all.filter((p) => !isLegacyUnconfirmed(p));
-      const legacy    = all.filter((p) =>  isLegacyUnconfirmed(p));
+      // Merge rather than replace: keep any posts that were optimistically added
+      // to the UI (e.g. via drive-queue) but haven't yet been confirmed by this
+      // particular fetch. This prevents a concurrent in-flight load() — triggered
+      // by the 30-second interval — from wiping a post that just appeared.
+      setPosts((prev) => {
+        const fetchedIds = new Set(fetched.map((p) => p.id));
+        const optimistic = prev.filter((p) => !fetchedIds.has(p.id) && !isDeleted(p.id));
+        return [...fetched, ...optimistic].sort(
+          (a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime(),
+        );
+      });
+
+      const scheduled = fetched.filter((p) => !isLegacyUnconfirmed(p));
+      const legacy    = fetched.filter((p) =>  isLegacyUnconfirmed(p));
       setEditTimes((prev) => {
         const next = { ...prev };
         legacy.forEach((post, i) => {
@@ -228,7 +239,6 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
       }
 
       setDriveMsg('Foto añadida a la cola. La imagen se descargará antes de publicarse.');
-      load().catch(() => {});
     } catch (e) {
       setDriveError(e instanceof Error ? e.message : 'No se pudo añadir a la cola.');
     } finally {
