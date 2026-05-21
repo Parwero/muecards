@@ -209,7 +209,11 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
       } else {
         msg = `${uploaded} foto${uploaded !== 1 ? 's' : ''} importada${uploaded !== 1 ? 's' : ''}`;
         if (moved > 0) msg += ` · ${moved} movida${moved !== 1 ? 's' : ''} a Subidas`;
-        if (failed.length > 0) msg += ` · ${failed.length} con error`;
+        if (failed.length > 0) {
+          msg += ` · ${failed.length} con error`;
+          const firstErr = failed[0]?.error;
+          if (firstErr) msg += `: ${firstErr.substring(0, 120)}`;
+        }
         if (notMoved.length > 0) {
           msg += ` · ${notMoved.length} no se pudo${notMoved.length !== 1 ? 'n' : ''} mover (quedan en Por Subir)`;
         }

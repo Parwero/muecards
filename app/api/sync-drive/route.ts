@@ -180,12 +180,17 @@ export async function POST(_req: NextRequest) {
       let outExt: string;
 
       if (isHeic) {
-        // Dynamic require so a missing sharp binary only fails this file
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const sharp = require('sharp') as typeof import('sharp');
-        finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
-        contentType = 'image/jpeg';
-        outExt = 'jpg';
+        try {
+          const { default: sharp } = await import('sharp');
+          finalBuffer = await sharp(rawBuffer).jpeg({ quality: 95 }).toBuffer();
+          contentType = 'image/jpeg';
+          outExt = 'jpg';
+        } catch {
+          // sharp not available or HEIC conversion failed — upload raw
+          finalBuffer = rawBuffer;
+          contentType = file.mimeType;
+          outExt = 'heic';
+        }
       } else {
         finalBuffer = rawBuffer;
         contentType = file.mimeType;
