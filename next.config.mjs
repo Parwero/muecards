@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    // sharp is a native module — must not be webpack-bundled so Node.js can
-    // load it with require() at runtime. heic-decode removed (not installed;
-    // sharp handles HEIC natively via libvips).
-    serverComponentsExternalPackages: ['sharp'],
+    // Prevent webpack from bundling native/WASM packages that must be loaded
+    // by Node.js at runtime. heic-decode uses @napi-rs/wasm-runtime (WASM)
+    // and sharp uses native binaries — both must be kept external.
+    serverComponentsExternalPackages: ['sharp', 'heic-decode'],
   },
   images: {
     remotePatterns: [
