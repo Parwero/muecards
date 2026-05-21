@@ -188,7 +188,11 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     }
   };
 
-  // ── Import one Drive file ─────────────────────────────────────────────────
+  // ── Queue one Drive file (fast path — no download) ───────────────────────
+  //
+  // Saves the scheduled date immediately (< 1 s). The actual file download
+  // and upload to Supabase Storage is deferred to the daily cron so we never
+  // hit Vercel Hobby's 10-second function limit.
 
   const importDriveFile = async (file: DriveFile) => {
     const timeStr = driveEditTimes[file.id];
@@ -197,7 +201,7 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
     setDriveImporting((prev) => new Set(prev).add(file.id));
     setDriveError(null);
     try {
-      const res = await fetch('/api/drive-import', {
+      const res = await fetch('/api/drive-queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -207,30 +211,26 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
           scheduledTime: new Date(timeStr).toISOString(),
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; post?: ScheduledPost; error?: string; warning?: string };
+      const data = (await res.json()) as { ok?: boolean; post?: ScheduledPost; error?: string };
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
 
       // Remove from Drive list
       setDriveFiles((prev) => prev.filter((f) => f.id !== file.id));
       setDriveEditTimes((prev) => { const n = { ...prev }; delete n[file.id]; return n; });
 
-      // Add the returned post directly to queue (server-confirmed insert — no re-fetch needed)
+      // Add the returned post directly to the queue — instant UI update
       if (data.post) {
-        setPosts((prev) => [...prev, data.post!].sort(
-          (a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime(),
-        ));
+        setPosts((prev) =>
+          [...prev, data.post!].sort(
+            (a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime(),
+          ),
+        );
       }
 
-      if (data.warning) {
-        setDriveMsg(`Importado · ${data.warning}`);
-      } else {
-        setDriveMsg('Foto añadida a la cola correctamente.');
-      }
-
-      // Background sync to pick up any concurrent changes
+      setDriveMsg('Foto añadida a la cola. La imagen se descargará antes de publicarse.');
       load().catch(() => {});
     } catch (e) {
-      setDriveError(e instanceof Error ? e.message : 'No se pudo importar.');
+      setDriveError(e instanceof Error ? e.message : 'No se pudo añadir a la cola.');
     } finally {
       setDriveImporting((prev) => { const n = new Set(prev); n.delete(file.id); return n; });
     }
