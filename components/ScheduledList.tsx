@@ -207,18 +207,28 @@ export function ScheduledList({ refreshKey }: ScheduledListProps) {
           scheduledTime: new Date(timeStr).toISOString(),
         }),
       });
-      const data = (await res.json()) as { ok?: boolean; error?: string; warning?: string };
+      const data = (await res.json()) as { ok?: boolean; post?: ScheduledPost; error?: string; warning?: string };
       if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
 
-      // Remove from Drive list and refresh DB posts
+      // Remove from Drive list
       setDriveFiles((prev) => prev.filter((f) => f.id !== file.id));
       setDriveEditTimes((prev) => { const n = { ...prev }; delete n[file.id]; return n; });
+
+      // Add the returned post directly to queue (server-confirmed insert — no re-fetch needed)
+      if (data.post) {
+        setPosts((prev) => [...prev, data.post!].sort(
+          (a, b) => new Date(a.scheduled_time).getTime() - new Date(b.scheduled_time).getTime(),
+        ));
+      }
+
       if (data.warning) {
         setDriveMsg(`Importado · ${data.warning}`);
       } else {
         setDriveMsg('Foto añadida a la cola correctamente.');
       }
-      await load();
+
+      // Background sync to pick up any concurrent changes
+      load().catch(() => {});
     } catch (e) {
       setDriveError(e instanceof Error ? e.message : 'No se pudo importar.');
     } finally {
