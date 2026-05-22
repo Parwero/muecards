@@ -1,0 +1,722 @@
+{
+  "auth": {
+    "login_valido": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "ok": true
+      }
+    },
+    "login_invalido": {
+      "ok": false,
+      "status": 401,
+      "body": {
+        "error": "Credenciales incorrectas."
+      }
+    },
+    "ruta_sin_sesion": {
+      "ok": true,
+      "status": 200,
+      "body": "<!DOCTYPE html><html lang=\"es\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/css/c36a59c13da742f7.css\" data-precedence=\"next\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack-c81f7fd28659d64f.js\"/><script src=\"/_next/static/chunks/fd9d1056-142b284ee2e0c71d.js\" async=\"\"></script><script src=\"/_next/static/chunks/117-96f2f63ecdd24bd7.js\" async=\"\"></script><script sr"
+    },
+    "ruta_con_sesion": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "posts": [
+          {
+            "id": "648b90ac-1ad4-498b-8c77-e1d9c75c91a7",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1777586211155-1c6f57bd-9cad-4bd9-a8cd-75215451a793.png",
+            "caption": "mew 151, el brillo japo es espectacular",
+            "scheduled_time": "2026-05-01T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1777586211155-1c6f57bd-9cad-4bd9-a8cd-75215451a793.png",
+            "ig_media_id": "18102017081063575",
+            "error_message": null,
+            "created_at": "2026-04-30T21:56:53.429951+00:00"
+          },
+          {
+            "id": "82eb03af-9bc7-4632-9d2e-59e08e26779e",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1778105437917-690ca4f3-677b-431a-b7ce-d7ee0edb8f13.jpg",
+            "caption": "Celebration Players Ceremony - recomendadisimas de pillar",
+            "scheduled_time": "2026-05-08T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1778105437917-690ca4f3-677b-431a-b7ce-d7ee0edb8f13.jpg",
+            "ig_media_id": "17965681476066778",
+            "error_message": null,
+            "created_at": "2026-05-06T22:10:38.949123+00:00"
+          },
+          {
+            "id": "883f7580-bd7b-496e-91a3-a0157144c621",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1778269557522-9d52ec6f-9e87-4970-a1a2-4d2e8793fd55.jpg",
+            "caption": "Otra celebrations, con esta se acaba el trio de tres, pero hay más de estas promos",
+            "scheduled_time": "2026-05-09T06:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1778269557522-9d52ec6f-9e87-4970-a1a2-4d2e8793fd55.jpg",
+            "ig_media_id": "17883947580396190",
+            "error_message": null,
+            "created_at": "2026-05-08T19:45:59.217242+00:00"
+          },
+          {
+            "id": "60127fce-2c31-4109-9252-58780c422cda",
+            "image_url": "/api/drive-thumbnail?id=1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp&mime=image%2Fheif",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "failed",
+            "storage_path": "drive:1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp:image/heif",
+            "ig_media_id": null,
+            "error_message": "IG media create failed: Only photo or video can be accepted as media type.",
+            "created_at": "2026-05-21T17:29:21.559956+00:00"
+          },
+          {
+            "id": "9f594580-fcde-4f64-85d4-090bd3ddf541",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779377298145-b1471e2c-e9a9-4436-853d-7653bcb56174.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1779377298145-b1471e2c-e9a9-4436-853d-7653bcb56174.jpg",
+            "ig_media_id": "17939458962233857",
+            "error_message": null,
+            "created_at": "2026-05-21T15:28:19.775683+00:00"
+          },
+          {
+            "id": "e2496ffc-6308-4df1-8c4e-6c9e3ebd29ff",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779380875194-239f7b2c-eacd-484e-ae28-cffb6f9fce1a.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1779380875194-239f7b2c-eacd-484e-ae28-cffb6f9fce1a.jpg",
+            "ig_media_id": "18099414637878969",
+            "error_message": null,
+            "created_at": "2026-05-21T16:27:57.053715+00:00"
+          },
+          {
+            "id": "15e0da75-b6cc-4c18-b0b0-7c2ef0fae4de",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779381532761-5aa792b7-0015-485b-b425-b7633e9d6775.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1779381532761-5aa792b7-0015-485b-b425-b7633e9d6775.jpg",
+            "ig_media_id": "17950439670160050",
+            "error_message": null,
+            "created_at": "2026-05-21T16:38:54.565794+00:00"
+          },
+          {
+            "id": "7e457a01-6271-4bf7-beac-7d5c9bfd7052",
+            "image_url": "/api/drive-thumbnail?id=1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp&mime=image%2Fheif",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "failed",
+            "storage_path": "drive:1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp:image/heif",
+            "ig_media_id": null,
+            "error_message": "IG media create failed: Only photo or video can be accepted as media type.",
+            "created_at": "2026-05-21T16:49:31.851669+00:00"
+          },
+          {
+            "id": "c6413ecd-ea55-4be8-8e94-9a48de3122ef",
+            "image_url": "/api/drive-thumbnail?id=1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp&mime=image%2Fheif",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "failed",
+            "storage_path": "drive:1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp:image/heif",
+            "ig_media_id": null,
+            "error_message": "IG media create failed: Only photo or video can be accepted as media type.",
+            "created_at": "2026-05-21T17:00:32.412886+00:00"
+          },
+          {
+            "id": "0905173c-1f23-4172-906c-2f91ea997c6d",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779377304898-26a2a0f7-0959-46e6-94d7-e6c3a17e3987.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2026-05-23T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779377304898-26a2a0f7-0959-46e6-94d7-e6c3a17e3987.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T15:28:26.237636+00:00"
+          },
+          {
+            "id": "c2b11d3e-8b33-457f-a0a4-22284471c372",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779380880454-7a4bc44b-c739-46e5-a101-8fffafb43466.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2026-05-23T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779380880454-7a4bc44b-c739-46e5-a101-8fffafb43466.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T16:28:00.943647+00:00"
+          },
+          {
+            "id": "995129fb-f66f-401a-8e9d-d27a1d769daa",
+            "image_url": "/api/drive-thumbnail?id=1FwlubfKLyYJ-w0A4S5jy1uWKuNdeEJsJ&mime=image%2Fheif",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2026-05-23T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "drive:1FwlubfKLyYJ-w0A4S5jy1uWKuNdeEJsJ:image/heif",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T17:29:26.162452+00:00"
+          },
+          {
+            "id": "910902a5-2ba7-4937-8fd1-689ea37f0cfe",
+            "image_url": "/api/drive-thumbnail?id=1wDbJCIf2K6h33fPAUTH6aMPjiNqtBryj&mime=image%2Fheif",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2026-05-24T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "drive:1wDbJCIf2K6h33fPAUTH6aMPjiNqtBryj:image/heif",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T17:29:27.931132+00:00"
+          },
+          {
+            "id": "3e2b6a93-b2d6-41ac-b3f3-1cc80ce959d6",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779377315730-8c3b8eef-f5c2-4ba4-ba75-84eb5ba94a68.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2026-05-24T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779377315730-8c3b8eef-f5c2-4ba4-ba75-84eb5ba94a68.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T15:28:36.657878+00:00"
+          },
+          {
+            "id": "2162742c-1460-47c8-8368-aaeacbd2e34c",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779380882421-de82055c-2fb2-49f4-9dd0-d2ff1bfa3501.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2026-05-24T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779380882421-de82055c-2fb2-49f4-9dd0-d2ff1bfa3501.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T16:28:03.138469+00:00"
+          },
+          {
+            "id": "ef38a09f-2f81-4238-bed1-689bc0883295",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779364611069-d3afb9e4-0ec5-4c2a-b437-238eb2a58d9a.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779364611069-d3afb9e4-0ec5-4c2a-b437-238eb2a58d9a.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T11:56:51.649354+00:00"
+          },
+          {
+            "id": "0873102e-22da-4e85-be3d-b6193fda14ab",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779366814801-9ade130b-d1f8-4db0-85b5-afef74db2a2b.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779366814801-9ade130b-d1f8-4db0-85b5-afef74db2a2b.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T12:33:36.241295+00:00"
+          },
+          {
+            "id": "43c99774-b049-46c8-b4d4-11111a8b990e",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779366823912-4bf38edc-9085-4281-84b4-978d2ec1ebb9.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779366823912-4bf38edc-9085-4281-84b4-978d2ec1ebb9.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T12:33:44.828827+00:00"
+          },
+          {
+            "id": "c8ef445f-e80c-4e45-be0c-0862de6cfcd6",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779366820008-1b88f17b-f914-44d6-8d0a-9bd31bca09a0.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779366820008-1b88f17b-f914-44d6-8d0a-9bd31bca09a0.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T12:33:40.688809+00:00"
+          },
+          {
+            "id": "475f8f56-95fb-4708-8f86-bece1ad5804a",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779368686710-6eca93f1-dac5-4bd3-9a1d-4011ab0f9e05.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779368686710-6eca93f1-dac5-4bd3-9a1d-4011ab0f9e05.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T13:04:47.985507+00:00"
+          },
+          {
+            "id": "b614f89b-3111-4f07-90f1-373dd223c467",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779368691010-99612453-e3cb-41f1-9f65-8166a181e9cf.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779368691010-99612453-e3cb-41f1-9f65-8166a181e9cf.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T13:04:52.219522+00:00"
+          },
+          {
+            "id": "4be652dd-b6d9-4f4b-b24e-cf2d44a44688",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779368695215-68353cd1-ce6b-49c2-a10b-665d600940e8.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779368695215-68353cd1-ce6b-49c2-a10b-665d600940e8.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T13:04:56.096581+00:00"
+          },
+          {
+            "id": "8ad21f80-eaa0-4bd4-a992-92ae77d60b6a",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779364603315-19672c6c-0d7e-4d8e-96b5-51b9814d5e55.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779364603315-19672c6c-0d7e-4d8e-96b5-51b9814d5e55.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T11:56:44.356943+00:00"
+          },
+          {
+            "id": "d8834813-33b9-46f0-9482-e11b4562c670",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779364607453-78039f98-ed27-4f21-bd7d-d3d254423b2e.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779364607453-78039f98-ed27-4f21-bd7d-d3d254423b2e.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T11:56:48.450889+00:00"
+          }
+        ]
+      }
+    },
+    "env_auth": {
+      "AUTH_USERNAME_set": true,
+      "AUTH_PASSWORD_set": true,
+      "AUTH_SECRET_set": true
+    }
+  },
+  "schedule": {
+    "upload_imagen_valida": {
+      "ok": true,
+      "status": 201,
+      "body": {
+        "ok": true,
+        "post": {
+          "id": "4c0fcbba-ee24-4725-a783-67003452546f",
+          "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779439167268-5c2a69cd-9ea0-408e-94c0-1cb500210d2f.png",
+          "caption": "Diagnóstico automático — agente test",
+          "scheduled_time": "2026-05-22T10:39:26+00:00",
+          "status": "pending",
+          "storage_path": "pending/1779439167268-5c2a69cd-9ea0-408e-94c0-1cb500210d2f.png",
+          "ig_media_id": null,
+          "error_message": null,
+          "created_at": "2026-05-22T08:39:27.672067+00:00"
+        }
+      }
+    },
+    "sin_imagen": {
+      "ok": false,
+      "status": 400,
+      "body": {
+        "error": "Falta el archivo de imagen."
+      }
+    },
+    "fecha_pasada": {
+      "ok": false,
+      "status": 400,
+      "body": {
+        "error": "La fecha de programación debe estar en el futuro."
+      }
+    },
+    "caption_largo": {
+      "ok": false,
+      "status": 400,
+      "body": {
+        "error": "El caption supera el límite de Instagram (2.200 caracteres)."
+      }
+    },
+    "listar_posts": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "posts": [
+          {
+            "id": "648b90ac-1ad4-498b-8c77-e1d9c75c91a7",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1777586211155-1c6f57bd-9cad-4bd9-a8cd-75215451a793.png",
+            "caption": "mew 151, el brillo japo es espectacular",
+            "scheduled_time": "2026-05-01T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1777586211155-1c6f57bd-9cad-4bd9-a8cd-75215451a793.png",
+            "ig_media_id": "18102017081063575",
+            "error_message": null,
+            "created_at": "2026-04-30T21:56:53.429951+00:00"
+          },
+          {
+            "id": "82eb03af-9bc7-4632-9d2e-59e08e26779e",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1778105437917-690ca4f3-677b-431a-b7ce-d7ee0edb8f13.jpg",
+            "caption": "Celebration Players Ceremony - recomendadisimas de pillar",
+            "scheduled_time": "2026-05-08T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1778105437917-690ca4f3-677b-431a-b7ce-d7ee0edb8f13.jpg",
+            "ig_media_id": "17965681476066778",
+            "error_message": null,
+            "created_at": "2026-05-06T22:10:38.949123+00:00"
+          },
+          {
+            "id": "883f7580-bd7b-496e-91a3-a0157144c621",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1778269557522-9d52ec6f-9e87-4970-a1a2-4d2e8793fd55.jpg",
+            "caption": "Otra celebrations, con esta se acaba el trio de tres, pero hay más de estas promos",
+            "scheduled_time": "2026-05-09T06:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1778269557522-9d52ec6f-9e87-4970-a1a2-4d2e8793fd55.jpg",
+            "ig_media_id": "17883947580396190",
+            "error_message": null,
+            "created_at": "2026-05-08T19:45:59.217242+00:00"
+          },
+          {
+            "id": "60127fce-2c31-4109-9252-58780c422cda",
+            "image_url": "/api/drive-thumbnail?id=1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp&mime=image%2Fheif",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "failed",
+            "storage_path": "drive:1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp:image/heif",
+            "ig_media_id": null,
+            "error_message": "IG media create failed: Only photo or video can be accepted as media type.",
+            "created_at": "2026-05-21T17:29:21.559956+00:00"
+          },
+          {
+            "id": "9f594580-fcde-4f64-85d4-090bd3ddf541",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779377298145-b1471e2c-e9a9-4436-853d-7653bcb56174.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1779377298145-b1471e2c-e9a9-4436-853d-7653bcb56174.jpg",
+            "ig_media_id": "17939458962233857",
+            "error_message": null,
+            "created_at": "2026-05-21T15:28:19.775683+00:00"
+          },
+          {
+            "id": "e2496ffc-6308-4df1-8c4e-6c9e3ebd29ff",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779380875194-239f7b2c-eacd-484e-ae28-cffb6f9fce1a.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1779380875194-239f7b2c-eacd-484e-ae28-cffb6f9fce1a.jpg",
+            "ig_media_id": "18099414637878969",
+            "error_message": null,
+            "created_at": "2026-05-21T16:27:57.053715+00:00"
+          },
+          {
+            "id": "15e0da75-b6cc-4c18-b0b0-7c2ef0fae4de",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779381532761-5aa792b7-0015-485b-b425-b7633e9d6775.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "published",
+            "storage_path": "pending/1779381532761-5aa792b7-0015-485b-b425-b7633e9d6775.jpg",
+            "ig_media_id": "17950439670160050",
+            "error_message": null,
+            "created_at": "2026-05-21T16:38:54.565794+00:00"
+          },
+          {
+            "id": "7e457a01-6271-4bf7-beac-7d5c9bfd7052",
+            "image_url": "/api/drive-thumbnail?id=1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp&mime=image%2Fheif",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "failed",
+            "storage_path": "drive:1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp:image/heif",
+            "ig_media_id": null,
+            "error_message": "IG media create failed: Only photo or video can be accepted as media type.",
+            "created_at": "2026-05-21T16:49:31.851669+00:00"
+          },
+          {
+            "id": "c6413ecd-ea55-4be8-8e94-9a48de3122ef",
+            "image_url": "/api/drive-thumbnail?id=1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp&mime=image%2Fheif",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2026-05-22T07:00:00+00:00",
+            "status": "failed",
+            "storage_path": "drive:1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp:image/heif",
+            "ig_media_id": null,
+            "error_message": "IG media create failed: Only photo or video can be accepted as media type.",
+            "created_at": "2026-05-21T17:00:32.412886+00:00"
+          },
+          {
+            "id": "0905173c-1f23-4172-906c-2f91ea997c6d",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779377304898-26a2a0f7-0959-46e6-94d7-e6c3a17e3987.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2026-05-23T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779377304898-26a2a0f7-0959-46e6-94d7-e6c3a17e3987.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T15:28:26.237636+00:00"
+          },
+          {
+            "id": "c2b11d3e-8b33-457f-a0a4-22284471c372",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779380880454-7a4bc44b-c739-46e5-a101-8fffafb43466.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2026-05-23T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779380880454-7a4bc44b-c739-46e5-a101-8fffafb43466.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T16:28:00.943647+00:00"
+          },
+          {
+            "id": "995129fb-f66f-401a-8e9d-d27a1d769daa",
+            "image_url": "/api/drive-thumbnail?id=1FwlubfKLyYJ-w0A4S5jy1uWKuNdeEJsJ&mime=image%2Fheif",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2026-05-23T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "drive:1FwlubfKLyYJ-w0A4S5jy1uWKuNdeEJsJ:image/heif",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T17:29:26.162452+00:00"
+          },
+          {
+            "id": "910902a5-2ba7-4937-8fd1-689ea37f0cfe",
+            "image_url": "/api/drive-thumbnail?id=1wDbJCIf2K6h33fPAUTH6aMPjiNqtBryj&mime=image%2Fheif",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2026-05-24T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "drive:1wDbJCIf2K6h33fPAUTH6aMPjiNqtBryj:image/heif",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T17:29:27.931132+00:00"
+          },
+          {
+            "id": "3e2b6a93-b2d6-41ac-b3f3-1cc80ce959d6",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779377315730-8c3b8eef-f5c2-4ba4-ba75-84eb5ba94a68.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2026-05-24T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779377315730-8c3b8eef-f5c2-4ba4-ba75-84eb5ba94a68.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T15:28:36.657878+00:00"
+          },
+          {
+            "id": "2162742c-1460-47c8-8368-aaeacbd2e34c",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/pending/1779380882421-de82055c-2fb2-49f4-9dd0-d2ff1bfa3501.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2026-05-24T07:00:00+00:00",
+            "status": "pending",
+            "storage_path": "pending/1779380882421-de82055c-2fb2-49f4-9dd0-d2ff1bfa3501.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T16:28:03.138469+00:00"
+          },
+          {
+            "id": "ef38a09f-2f81-4238-bed1-689bc0883295",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779364611069-d3afb9e4-0ec5-4c2a-b437-238eb2a58d9a.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779364611069-d3afb9e4-0ec5-4c2a-b437-238eb2a58d9a.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T11:56:51.649354+00:00"
+          },
+          {
+            "id": "0873102e-22da-4e85-be3d-b6193fda14ab",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779366814801-9ade130b-d1f8-4db0-85b5-afef74db2a2b.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779366814801-9ade130b-d1f8-4db0-85b5-afef74db2a2b.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T12:33:36.241295+00:00"
+          },
+          {
+            "id": "43c99774-b049-46c8-b4d4-11111a8b990e",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779366823912-4bf38edc-9085-4281-84b4-978d2ec1ebb9.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779366823912-4bf38edc-9085-4281-84b4-978d2ec1ebb9.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T12:33:44.828827+00:00"
+          },
+          {
+            "id": "c8ef445f-e80c-4e45-be0c-0862de6cfcd6",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779366820008-1b88f17b-f914-44d6-8d0a-9bd31bca09a0.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779366820008-1b88f17b-f914-44d6-8d0a-9bd31bca09a0.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T12:33:40.688809+00:00"
+          },
+          {
+            "id": "475f8f56-95fb-4708-8f86-bece1ad5804a",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779368686710-6eca93f1-dac5-4bd3-9a1d-4011ab0f9e05.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779368686710-6eca93f1-dac5-4bd3-9a1d-4011ab0f9e05.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T13:04:47.985507+00:00"
+          },
+          {
+            "id": "b614f89b-3111-4f07-90f1-373dd223c467",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779368691010-99612453-e3cb-41f1-9f65-8166a181e9cf.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779368691010-99612453-e3cb-41f1-9f65-8166a181e9cf.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T13:04:52.219522+00:00"
+          },
+          {
+            "id": "4be652dd-b6d9-4f4b-b24e-cf2d44a44688",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779368695215-68353cd1-ce6b-49c2-a10b-665d600940e8.jpg",
+            "caption": "Veemon_baby",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779368695215-68353cd1-ce6b-49c2-a10b-665d600940e8.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T13:04:56.096581+00:00"
+          },
+          {
+            "id": "8ad21f80-eaa0-4bd4-a992-92ae77d60b6a",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779364603315-19672c6c-0d7e-4d8e-96b5-51b9814d5e55.jpg",
+            "caption": "Psyduck promo, hasta hace nada desconocía esta carta carta",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779364603315-19672c6c-0d7e-4d8e-96b5-51b9814d5e55.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T11:56:44.356943+00:00"
+          },
+          {
+            "id": "d8834813-33b9-46f0-9482-e11b4562c670",
+            "image_url": "https://upipejvxnzypokbvmvhk.supabase.co/storage/v1/object/public/post-images/local_queued/1779364607453-78039f98-ed27-4f21-bd7d-d3d254423b2e.jpg",
+            "caption": "Marine Angemon alter",
+            "scheduled_time": "2099-01-01T09:00:00+00:00",
+            "status": "pending",
+            "storage_path": "local_queued/1779364607453-78039f98-ed27-4f21-bd7d-d3d254423b2e.jpg",
+            "ig_media_id": null,
+            "error_message": null,
+            "created_at": "2026-05-21T11:56:48.450889+00:00"
+          }
+        ]
+      }
+    }
+  },
+  "publish": {
+    "cron_sin_auth": {
+      "ok": false,
+      "status": 401,
+      "body": {
+        "error": "Unauthorized"
+      }
+    },
+    "cron_con_auth": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "ok": true,
+        "processed": 0,
+        "message": "Nothing due."
+      }
+    },
+    "queue_next": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "next_slot": "2099-01-03T09:00:00.000Z"
+      }
+    },
+    "ig_setup": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "found": true,
+        "ig_user_id": "17841442482060436",
+        "page_name": "Coleccion cartas",
+        "all_pages": [
+          {
+            "page_id": "1021207714418518",
+            "page_name": "Coleccion cartas",
+            "ig_user_id": "17841442482060436"
+          }
+        ]
+      }
+    },
+    "env_ig": {
+      "IG_ACCESS_TOKEN_set": true,
+      "IG_ACCESS_TOKEN_prefix": "EAAUZCnr6F...",
+      "IG_USER_ID": "17841442482060436",
+      "IG_GRAPH_VERSION": "v21.0"
+    },
+    "ig_token_directo": {
+      "ok": false,
+      "status": 400,
+      "body": {
+        "error": {
+          "message": "Error validating access token: Session has expired on Thursday, 21-May-26 04:00:00 PDT. The current time is Friday, 22-May-26 01:39:32 PDT.",
+          "type": "OAuthException",
+          "code": 190,
+          "error_subcode": 463,
+          "fbtrace_id": "AfGVfuv4idNRTyjCxHoUBAF"
+        }
+      }
+    }
+  },
+  "drive": {
+    "drive_list": {
+      "ok": true,
+      "status": 200,
+      "body": {
+        "files": [
+          {
+            "mimeType": "image/heif",
+            "id": "1x_XQi-fFD-iimurz8Fj06MPhfPqUZwBp",
+            "name": "Psyduck promo, hasta hace nada desconocía esta carta carta"
+          },
+          {
+            "mimeType": "image/heif",
+            "id": "1FwlubfKLyYJ-w0A4S5jy1uWKuNdeEJsJ",
+            "name": "Marine Angemon alter"
+          },
+          {
+            "mimeType": "image/heif",
+            "id": "1wDbJCIf2K6h33fPAUTH6aMPjiNqtBryj",
+            "name": "Veemon_baby.HEIC"
+          }
+        ]
+      }
+    },
+    "drive_thumbnail": {
+      "ok": false,
+      "status": 400,
+      "body": "Falta el parámetro id"
+    },
+    "sync_drive": {
+      "ok": true,
+      "status": 200,
+      "body": "<!DOCTYPE html><html lang=\"es\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/css/c36a59c13da742f7.css\" data-precedence=\"next\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack-c81f7fd28659d64f.js\"/><script src=\"/_next/static/chunks/fd9d1056-142b284ee2e0c71d.js\" async=\"\"></script><script src=\"/_next/static/chunks/117-96f2f63ecdd24bd7.js\" async=\"\"></script><script sr"
+    }
+  },
+  "logs": {
+    "logs_con_sesion": {
+      "ok": false,
+      "status": 500,
+      "body": {
+        "error": "Could not find the table 'public.app_logs' in the schema cache"
+      }
+    },
+    "logs_sin_sesion": {
+      "ok": true,
+      "status": 200,
+      "body": "<!DOCTYPE html><html lang=\"es\"><head><meta charSet=\"utf-8\"/><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/><link rel=\"stylesheet\" href=\"/_next/static/css/c36a59c13da742f7.css\" data-precedence=\"next\"/><link rel=\"preload\" as=\"script\" fetchPriority=\"low\" href=\"/_next/static/chunks/webpack-c81f7fd28659d64f.js\"/><script src=\"/_next/static/chunks/fd9d1056-142b284ee2e0c71d.js\" async=\"\"></script><script src=\"/_next/static/chunks/117-96f2f63ecdd24bd7.js\" async=\"\"></script><script sr"
+    }
+  }
+}

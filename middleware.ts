@@ -13,6 +13,8 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!login|api/auth|api/publish|api/preview|api/local-upload|api/test-drive|api/fix-heic|_next/static|_next/image|favicon.ico).*)',
+    // Exclude: public auth routes, cron endpoints (they use CRON_SECRET, not session cookie),
+    // and Next.js internals.
+    '/((?!login|api/auth|api/publish|api/cron|api/preview|api/local-upload|api/test-drive|api/fix-heic|_next/static|_next/image|favicon.ico).*)',
   ],
 };

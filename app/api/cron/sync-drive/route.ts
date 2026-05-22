@@ -71,10 +71,13 @@ export async function GET(req: NextRequest) {
     // These have storage_path = "drive:<fileId>:<mimeType>"
     // ══════════════════════════════════════════════════════════════════════════
 
+    // Also retry previously-failed drive posts — they failed because this cron
+    // was blocked by the middleware and their relative thumbnail URL was never
+    // replaced with a real Supabase Storage URL.
     const { data: drivePending } = await supabase
       .from('scheduled_posts')
       .select('id, storage_path, caption, scheduled_time')
-      .eq('status', 'pending')
+      .in('status', ['pending', 'failed'])
       .like('storage_path', 'drive:%')
       .order('scheduled_time', { ascending: true })
       .limit(5); // Process up to 5 per run; each file ~3-8 s on Hobby
@@ -122,10 +125,16 @@ export async function GET(req: NextRequest) {
           throw new Error('No se pudo obtener la URL pública.');
         }
 
-        // Update the post with the real Supabase URL
+        // Update the post with the real Supabase URL and reset to pending
+        // (post may have been 'failed' if this cron was previously blocked)
         const { error: updateErr } = await supabase
           .from('scheduled_posts')
-          .update({ image_url: urlData.publicUrl, storage_path: storagePath })
+          .update({
+            image_url:     urlData.publicUrl,
+            storage_path:  storagePath,
+            status:        'pending',
+            error_message: null,
+          })
           .eq('id', r.id);
 
         if (updateErr) throw new Error(`DB update: ${updateErr.message}`);
