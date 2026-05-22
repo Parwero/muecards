@@ -1,0 +1,6 @@
+# Test files — vitest is not in dependencies, these are dev-only
+__tests__/
+vitest.config.ts
+
+# Diagnostic scripts — Python tooling, not needed in deployment
+diagnostico/

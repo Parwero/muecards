@@ -39,3 +39,21 @@ on conflict (id) do update set public = true;
 -- -------------------------------------------------------------
 alter table public.scheduled_posts enable row level security;
 -- intentionally NO policies — only service_role can touch rows.
+
+-- -------------------------------------------------------------
+-- Table: app_logs  (used by lib/logger.ts and GET /api/admin/logs)
+-- -------------------------------------------------------------
+create table if not exists public.app_logs (
+  id         bigserial   primary key,
+  level      text        not null check (level in ('info', 'warn', 'error')),
+  route      text        not null,
+  message    text        not null,
+  details    jsonb,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists app_logs_created_at_idx on public.app_logs (created_at desc);
+create index if not exists app_logs_level_idx      on public.app_logs (level);
+
+alter table public.app_logs enable row level security;
+-- intentionally NO policies — only service_role can touch rows.
